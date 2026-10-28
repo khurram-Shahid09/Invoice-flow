@@ -14,6 +14,7 @@ from django.db import transaction
 
 from accounts.models import Membership, Organization, Role, User
 from audit.service import record
+from erp.demo import apply_vendor_settings
 from erp.models import ErpConnection
 from erp.sync import sync_connection
 
@@ -62,6 +63,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Reset: removed {deleted} documents, invoices and pages.")
         connection = self._connect_erp(org)
         run = sync_connection(connection, full=True)
+        apply_vendor_settings(org)
         self.stdout.write(f"Workspace: {org.name} ({org.id})")
         detail = ", ".join(f"{k} {v}" for k, v in run.counts.items()) or run.error
         self.stdout.write(f"ERP: {connection.kind}, sync {run.status} ({detail})")

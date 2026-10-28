@@ -37,3 +37,12 @@ def test_seed_demo_needs_a_password(settings) -> None:
     settings.DEMO_PASSWORD = ""
     with pytest.raises(CommandError, match="DEMO_PASSWORD"):
         call_command("seed_demo")
+
+
+def test_seed_demo_marks_utility_vendors_non_po(settings) -> None:
+    settings.DEMO_PASSWORD = "demo-password-123"
+    settings.ODOO_API_KEY = ""
+    call_command("seed_demo", stdout=None)
+    org = Organization.objects.get(name="Indus Retail (Pvt) Ltd")
+    non_po = set(ErpVendor.objects.for_org(org).filter(non_po=True).values_list("ref", flat=True))
+    assert non_po == {"N01", "N02", "N03"}
