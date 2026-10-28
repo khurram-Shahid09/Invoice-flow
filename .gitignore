@@ -49,3 +49,6 @@ apps/web/next-env.d.ts
 evals/data/generated/
 evals/reports/cache/
 evals/reports/media-tmp/
+
+# Demo recordings and renders (demo/scripts)
+demo/out/
