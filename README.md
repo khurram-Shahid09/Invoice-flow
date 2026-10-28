@@ -4,7 +4,12 @@
 
 InvoiceFlow is an AI accounts-payable agent. Supplier invoices arrive by email or upload, as PDFs or phone photos. InvoiceFlow reads them, checks them against the purchase order and the goods receipt, catches duplicates and fraud signals, routes exceptions to the right person, and posts approved bills into the ERP. Every field shows where it came from on the page, and every decision shows the rule behind it.
 
-> **Status:** 📐 Design complete · MVP not started. This folder holds the full product and engineering design. Code follows the [build plan](docs/15-roadmap-build-plan.md).
+> **Status:** 🛠️ Building the MVP, day 2 of 15 ([build plan](docs/15-roadmap-build-plan.md)).
+>
+> | Day | Done |
+> |---|---|
+> | 1 | Repo, Docker infrastructure, Django API with organisations, roles (clerk, approver, controller, admin), sign-in and an append-only audit log; Next.js dashboard shell; CI |
+> | 2 | Odoo seeded with a demo company, vendors, purchase orders and receipts; ERP adapter (Odoo + an in-memory fake); encrypted mirror of vendors and POs with incremental sync |
 
 ---
 
@@ -72,6 +77,29 @@ flowchart LR
 ```
 
 See [03 · Architecture](docs/03-architecture.md).
+
+## Quick start (local)
+
+Needs Docker Desktop, Python with [uv](https://docs.astral.sh/uv/), Node 22 and pnpm.
+
+```bash
+cp .env.example .env        # then fill DJANGO_SECRET_KEY, FIELD_ENCRYPTION_KEY, ODOO_ADMIN_PASSWORD, DEMO_PASSWORD
+docker compose -f infra/docker-compose.yml up -d                 # Postgres, Redis, S3, Mailpit
+docker compose -f infra/docker-compose.yml --profile erp up -d   # + Odoo (optional, about 1.5 GB RAM)
+
+cd services/core
+uv sync
+uv run python manage.py migrate
+uv run python ../../infra/odoo/seed.py      # optional: demo company, vendors, POs in Odoo
+uv run python manage.py seed_demo           # demo users; connects Odoo, or a fake ERP with the same data
+uv run uvicorn config.asgi:application --port 8100
+
+cd ../.. && pnpm install && pnpm dev:web    # http://localhost:3100
+```
+
+Sign in as `clerk@indus-retail.test`, `approver@…`, `controller@…` or `admin@…` with your `DEMO_PASSWORD`. Odoo runs at http://localhost:8069 and the test mailbox at http://localhost:8026.
+
+Checks: `uv run pytest` (add `-m odoo` for the Odoo contract tests), `uv run ruff check .`, `uv run mypy .`, `pnpm lint`, `pnpm typecheck`.
 
 ## Documentation
 
