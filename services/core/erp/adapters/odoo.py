@@ -56,6 +56,9 @@ def _dec(value: Any) -> Decimal:
 
 
 def _since(since: datetime | None) -> list:
+    """Odoo keeps microseconds but returns and compares whole seconds, so records changed in the
+    last second are read again next time. That overlap is deliberate: re-reading is harmless,
+    missing a change is not."""
     return [("write_date", ">", since.astimezone(UTC).strftime(ODOO_DATETIME))] if since else []
 
 
