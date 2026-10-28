@@ -4,6 +4,7 @@ Signs in as a dedicated least-privilege user (Purchase user, Inventory user, Bil
 an API key or password. Reads only, for now; posting bills lands on day 10.
 """
 
+import base64
 from collections.abc import Iterable
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -13,9 +14,11 @@ import httpx
 
 from .base import (
     Account,
+    BillDraft,
     BillRef,
     ConnectionInfo,
     ErpError,
+    PostedBill,
     PurchaseOrder,
     PurchaseOrderLine,
     Receipt,
@@ -237,7 +240,7 @@ class OdooAdapter:
         products = self._read(
             "product.product",
             (line["product_id"][0] for line in lines.values() if line["product_id"]),
-            ["default_code"],
+            ["default_code", "type"],
         )
         taxes = self._read(
             "account.tax", (t for line in lines.values() for t in line["taxes_id"]), ["amount"]
@@ -256,6 +259,7 @@ class OdooAdapter:
                 qty_invoiced=_dec(row["qty_invoiced"]),
                 unit_price=_dec(row["price_unit"]),
                 tax_rate=rates[0] if len(rates) == 1 else None,
+                is_service=bool(product and product["type"] == "service"),
             )
 
         result = []
@@ -344,3 +348,71 @@ class OdooAdapter:
             )
             for r in rows
         ]
+
+    # --- Posting (docs/09 "Posting algorithm") ---
+
+    def create_bill(self, bill: BillDraft) -> PostedBill:
+        """Create a draft vendor bill with the original file attached. Idempotent: a bill with
+        the same vendor and reference is returned instead of creating a second one."""
+        partner = int(bill.vendor_erp_id)
+        found = self._call(
+            "account.move",
+            "search",
+            [
+                ("partner_id", "=", partner),
+                ("ref", "=", bill.ref),
+                ("move_type", "=", "in_invoice"),
+            ],
+            limit=1,
+        )
+        if found:
+            return PostedBill(str(found[0]), self._url(found[0]), created=False)
+        currency = self._call("res.currency", "search", [("name", "=", bill.currency)], limit=1)
+        lines = []
+        for line in bill.lines:
+            values: dict[str, Any] = {
+                "name": line.description,
+                "quantity": float(line.quantity),
+                "price_unit": float(line.unit_price),
+                "tax_ids": [(6, 0, self._tax_ids(line.tax_rate))],
+            }
+            if line.po_line_erp_id:
+                values["purchase_line_id"] = int(line.po_line_erp_id)
+            lines.append((0, 0, values))
+        header: dict[str, Any] = {
+            "move_type": "in_invoice",
+            "partner_id": partner,
+            "ref": bill.ref,
+            "invoice_date": bill.invoice_date.isoformat(),
+            "invoice_line_ids": lines,
+        }
+        if bill.due_date:
+            header["invoice_date_due"] = bill.due_date.isoformat()
+        if currency:
+            header["currency_id"] = currency[0]
+        move = self._call("account.move", "create", header)
+        self._call(
+            "ir.attachment",
+            "create",
+            {
+                "name": bill.attachment_name,
+                "datas": base64.b64encode(bill.attachment).decode(),
+                "res_model": "account.move",
+                "res_id": move,
+                "mimetype": bill.attachment_mime,
+            },
+        )
+        return PostedBill(str(move), self._url(move), created=True)
+
+    def _tax_ids(self, rate: Decimal | None) -> list[int]:
+        if rate is None:
+            return []
+        domain = [
+            ("type_tax_use", "=", "purchase"),
+            ("amount", "=", float(rate)),
+            ("amount_type", "=", "percent"),
+        ]
+        return self._call("account.tax", "search", domain, limit=1)
+
+    def _url(self, move_id: int) -> str:
+        return f"{self.http.base_url}/odoo/action-account.action_move_in_invoice_type/{move_id}"

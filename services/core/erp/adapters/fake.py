@@ -15,8 +15,10 @@ from django.conf import settings
 
 from .base import (
     Account,
+    BillDraft,
     BillRef,
     ConnectionInfo,
+    PostedBill,
     PurchaseOrder,
     PurchaseOrderLine,
     Receipt,
@@ -51,6 +53,7 @@ class FakeErp:
     taxes: list[Tax] = field(default_factory=list)
     bills: list[BillRef] = field(default_factory=list)
     calls: list[str] = field(default_factory=list)  # for tests: which lists were requested
+    posted: list[BillDraft] = field(default_factory=list)
 
     def test_connection(self) -> ConnectionInfo:
         return ConnectionInfo("fake", self.company, self.currency, "fake-bot")
@@ -78,6 +81,34 @@ class FakeErp:
     def list_bills(self, since: datetime | None = None) -> list[BillRef]:
         self.calls.append("bills")
         return _changed(self.bills, since)
+
+    def create_bill(self, bill: BillDraft) -> PostedBill:
+        for existing in self.bills:
+            if existing.vendor_erp_id == bill.vendor_erp_id and existing.ref == bill.ref:
+                return PostedBill(existing.erp_id, f"fake://bills/{existing.erp_id}", False)
+        self.posted.append(bill)
+        total = sum(
+            (
+                ln.quantity * ln.unit_price * (1 + (ln.tax_rate or Decimal(0)) / 100)
+                for ln in bill.lines
+            ),
+            start=Decimal(0),
+        )
+        erp_id = str(len(self.bills) + 1)
+        now = datetime.now(UTC)
+        self.bills.append(
+            BillRef(
+                erp_id,
+                bill.vendor_erp_id,
+                bill.ref,
+                total,
+                bill.currency,
+                bill.invoice_date,
+                "draft",
+                now,
+            )
+        )
+        return PostedBill(erp_id, f"fake://bills/{erp_id}", True)
 
     def touch[T: (Vendor, PurchaseOrder, Receipt, BillRef)](
         self, record: T, at: datetime, **changes
@@ -146,6 +177,7 @@ class FakeErp:
                         qty_invoiced=Decimal(0),
                         unit_price=Decimal(price),
                         tax_rate=rate,
+                        is_service=bool(product.get("service")),
                     )
                 )
             erp.purchase_orders.append(

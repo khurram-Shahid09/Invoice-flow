@@ -48,6 +48,7 @@ class PurchaseOrderLine:
     qty_invoiced: Decimal
     unit_price: Decimal
     tax_rate: Decimal | None  # percent, None when the line has no or several taxes
+    is_service: bool = False  # services have no goods receipt: matched 2-way (docs/07)
 
 
 @dataclass(frozen=True)
@@ -105,6 +106,35 @@ class BillRef:
     updated_at: datetime
 
 
+@dataclass(frozen=True)
+class BillLine:
+    description: str
+    quantity: Decimal
+    unit_price: Decimal
+    tax_rate: Decimal | None
+    po_line_erp_id: str | None  # links the bill to the PO, so the ERP tracks billed quantities
+
+
+@dataclass(frozen=True)
+class BillDraft:
+    vendor_erp_id: str
+    ref: str  # the vendor's invoice number
+    invoice_date: date
+    due_date: date | None
+    currency: str
+    lines: tuple[BillLine, ...]
+    attachment_name: str
+    attachment: bytes
+    attachment_mime: str
+
+
+@dataclass(frozen=True)
+class PostedBill:
+    erp_id: str
+    url: str
+    created: bool  # False when a bill with this vendor and ref already existed
+
+
 class ErpAdapter(Protocol):
     def test_connection(self) -> ConnectionInfo: ...
     def list_vendors(self, since: datetime | None = None) -> list[Vendor]: ...
@@ -113,3 +143,4 @@ class ErpAdapter(Protocol):
     def list_accounts(self) -> list[Account]: ...
     def list_taxes(self) -> list[Tax]: ...
     def list_bills(self, since: datetime | None = None) -> list[BillRef]: ...
+    def create_bill(self, bill: BillDraft) -> PostedBill: ...

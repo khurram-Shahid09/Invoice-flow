@@ -42,3 +42,26 @@ def test_since_returns_only_changed_records() -> None:
     assert erp.list_vendors(since=later) == []
     vendor = erp.touch(erp.vendors[0], datetime(2026, 10, 21, tzinfo=UTC), email="new@x.test")
     assert erp.list_vendors(since=later) == [vendor]
+
+
+def test_create_bill_is_idempotent() -> None:
+    from datetime import date
+
+    from erp.adapters.base import BillDraft, BillLine
+
+    erp = FakeErp.from_seed()
+    draft = BillDraft(
+        vendor_erp_id="1",
+        ref="INV-2291",
+        invoice_date=date(2026, 10, 26),
+        due_date=None,
+        currency="PKR",
+        lines=(BillLine("A4 Paper", Decimal(50), Decimal(1450), Decimal(18), "1"),),
+        attachment_name="INV-2291.pdf",
+        attachment=b"%PDF",
+        attachment_mime="application/pdf",
+    )
+    first, again = erp.create_bill(draft), erp.create_bill(draft)
+    assert first.created and not again.created and first.erp_id == again.erp_id
+    assert erp.list_bills()[-1].total == Decimal("85550")
+    assert any(line.is_service for po in erp.purchase_orders for line in po.lines)

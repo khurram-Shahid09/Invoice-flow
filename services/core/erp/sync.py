@@ -172,6 +172,7 @@ def _save_purchase_orders(org_id: str, orders: list[PurchaseOrder]) -> None:
                     "qty_invoiced": line.qty_invoiced,
                     "unit_price": line.unit_price,
                     "tax_rate": line.tax_rate,
+                    "is_service": line.is_service,
                 },
             )
             keep.append(line.erp_id)

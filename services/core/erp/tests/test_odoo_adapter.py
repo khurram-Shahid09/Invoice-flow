@@ -54,7 +54,7 @@ RECORDS: dict[str, dict[int, dict]] = {
             "write_date": "2026-10-20 09:31:00",
         },
     },
-    "product.product": {5: {"id": 5, "default_code": "P-RACK-5"}},
+    "product.product": {5: {"id": 5, "default_code": "P-RACK-5", "type": "consu"}},
     "account.tax": {3: {"id": 3, "amount": 18.0}},
 }
 

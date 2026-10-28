@@ -149,6 +149,7 @@ class ErpPurchaseOrderLine(MirrorModel):
     qty_invoiced = models.DecimalField(max_digits=18, decimal_places=4)
     unit_price = models.DecimalField(max_digits=18, decimal_places=4)
     tax_rate = models.DecimalField(max_digits=7, decimal_places=4, null=True, blank=True)
+    is_service = models.BooleanField(default=False)
 
     class Meta:
         db_table = "erp_purchase_order_lines"

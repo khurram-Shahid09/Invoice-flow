@@ -18,4 +18,4 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]  # fast tes
 CELERY_TASK_ALWAYS_EAGER = True
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 LLM_PROVIDER = "fake"  # tests never call a real AI
-GEMINI_API_KEYS: list[str] = []
+GEMINI_API_KEYS = []
