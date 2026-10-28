@@ -30,7 +30,14 @@ DEMO_USERS = [
 class Command(BaseCommand):
     help = "Create the demo workspace and one user per role (password: DEMO_PASSWORD)."
 
-    def handle(self, *args, **options) -> None:
+    def add_arguments(self, parser) -> None:
+        parser.add_argument(
+            "--reset",
+            action="store_true",
+            help="Delete the workspace's invoices first (fresh demo)",
+        )
+
+    def handle(self, *args, reset: bool = False, **options) -> None:
         password = settings.DEMO_PASSWORD
         if len(password) < 10:
             raise CommandError("Set DEMO_PASSWORD (10+ characters) in .env first.")
@@ -48,6 +55,11 @@ class Command(BaseCommand):
                     org=org, user=user, defaults={"roles": sorted(roles), "approval_limit": limit}
                 )
 
+        if reset:
+            from invoices.models import Document
+
+            deleted, _ = Document.objects.for_org(org).delete()  # invoices and pages go with them
+            self.stdout.write(f"Reset: removed {deleted} documents, invoices and pages.")
         connection = self._connect_erp(org)
         run = sync_connection(connection, full=True)
         self.stdout.write(f"Workspace: {org.name} ({org.id})")
