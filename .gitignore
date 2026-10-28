@@ -1,0 +1,8 @@
+.env
+.venv/
+node_modules/
+__pycache__/
+.next/
+*.pyc
+evals/reports/cache/
+evals/data/private/
