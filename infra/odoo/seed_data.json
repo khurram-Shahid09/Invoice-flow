@@ -1,0 +1,63 @@
+{
+  "_comment": "Demo ERP data for Odoo (infra/odoo/seed.py) and the synthetic invoice generator (evals). All companies are fictional; emails use the reserved .test domain.",
+  "company": {
+    "name": "Indus Retail (Pvt) Ltd",
+    "vat": "4410236-7",
+    "street": "42 Main Boulevard, Gulberg III",
+    "city": "Lahore",
+    "email": "accounts@indus-retail.test"
+  },
+  "taxes": {
+    "goods": {"name": "GST 18% (purchases)", "amount": 18},
+    "services": {"name": "Services tax 16% (purchases)", "amount": 16}
+  },
+  "vendors": [
+    {"ref": "V01", "name": "Al-Noor Traders", "vat": "3520117-4", "city": "Lahore", "email": "accounts@alnoor-traders.test", "bank": "Meezan Bank", "bank_code": "MEZN", "account": "0102003300441201", "category": "office supplies"},
+    {"ref": "V02", "name": "Gulf Packaging Industries", "vat": "4210568-2", "city": "Karachi", "email": "billing@gulfpack.test", "bank": "Habib Bank Limited", "bank_code": "HABB", "account": "0071190045213309", "category": "packaging"},
+    {"ref": "V03", "name": "Mehran Steel Works", "vat": "4230991-6", "city": "Karachi", "email": "finance@mehransteel.test", "bank": "United Bank Limited", "bank_code": "UNIL", "account": "0109000321870044", "category": "fixtures"},
+    {"ref": "V04", "name": "Punjab Fresh Foods", "vat": "3640275-1", "city": "Multan", "email": "accounts@punjabfresh.test", "bank": "Bank Alfalah", "bank_code": "ALFH", "account": "0040100711239901", "category": "groceries"},
+    {"ref": "V05", "name": "Ravi Office Furniture", "vat": "6110452-9", "city": "Islamabad", "email": "sales@ravifurniture.test", "bank": "MCB Bank", "bank_code": "MUCB", "account": "1172006655018810", "category": "furniture"},
+    {"ref": "V06", "name": "Crescent Cleaning Supplies", "vat": "3310864-3", "city": "Faisalabad", "email": "accounts@crescentclean.test", "bank": "Allied Bank", "bank_code": "ABPA", "account": "0010047788120015", "category": "cleaning"},
+    {"ref": "V07", "name": "Swift Logistics (Pvt) Ltd", "vat": "3520771-0", "city": "Lahore", "email": "invoices@swiftlogistics.test", "bank": "Bank Al Habib", "bank_code": "BAHL", "account": "1020009877650301", "category": "freight"},
+    {"ref": "V08", "name": "Sky IT Solutions", "vat": "3530642-8", "city": "Lahore", "email": "billing@skyit.test", "bank": "Faysal Bank", "bank_code": "FAYS", "account": "3125301000452267", "category": "it hardware"},
+    {"ref": "N01", "name": "NetLink Broadband", "vat": "3520903-5", "city": "Lahore", "email": "billing@netlink.test", "bank": "Meezan Bank", "bank_code": "MEZN", "account": "0102009911300552", "category": "internet", "non_po": true},
+    {"ref": "N02", "name": "City Electric Supply Co.", "vat": "3520014-2", "city": "Lahore", "email": "bills@cityelectric.test", "bank": "Habib Bank Limited", "bank_code": "HABB", "account": "0071100200300488", "category": "electricity", "non_po": true},
+    {"ref": "N03", "name": "SparkClean Janitorial Services", "vat": "3520488-6", "city": "Lahore", "email": "office@sparkclean.test", "bank": "Bank Alfalah", "bank_code": "ALFH", "account": "0040100988234410", "category": "cleaning services", "non_po": true}
+  ],
+  "products": [
+    {"code": "P-A4-80", "name": "A4 Paper 80gsm (ream)", "price": 1450},
+    {"code": "P-TONER-85A", "name": "Toner Cartridge 85A", "price": 8900},
+    {"code": "P-STAPLER", "name": "Heavy Duty Stapler", "price": 1250},
+    {"code": "P-BOX-M", "name": "Corrugated Box Medium", "price": 95},
+    {"code": "P-BOX-L", "name": "Corrugated Box Large", "price": 140},
+    {"code": "P-TAPE", "name": "Packing Tape 2 inch", "price": 180},
+    {"code": "P-RACK-5", "name": "Steel Rack 5-Shelf", "price": 18500},
+    {"code": "P-SHELF-B", "name": "Shelf Bracket", "price": 650},
+    {"code": "P-RICE-25", "name": "Basmati Rice 25kg", "price": 7800},
+    {"code": "P-OIL-5", "name": "Cooking Oil 5L", "price": 2650},
+    {"code": "P-CHAIR-EX", "name": "Executive Chair", "price": 24500},
+    {"code": "P-DESK-W", "name": "Workstation Desk", "price": 32000},
+    {"code": "P-CLEAN-5", "name": "Floor Cleaner 5L", "price": 1150},
+    {"code": "P-MOP", "name": "Industrial Mop", "price": 950},
+    {"code": "S-FREIGHT", "name": "Freight Lahore-Karachi (per trip)", "price": 45000, "service": true},
+    {"code": "P-LAPTOP", "name": "Laptop Core i5 16GB", "price": 145000},
+    {"code": "P-MOUSE", "name": "Wireless Mouse", "price": 2200}
+  ],
+  "purchase_orders": [
+    {"key": "SEED-PO-01", "vendor": "V01", "lines": [["P-A4-80", 50, 1450], ["P-TONER-85A", 6, 8900]], "receive": "full"},
+    {"key": "SEED-PO-02", "vendor": "V02", "lines": [["P-BOX-M", 2000, 95], ["P-BOX-L", 1000, 140], ["P-TAPE", 200, 180]], "receive": "full"},
+    {"key": "SEED-PO-03", "vendor": "V03", "lines": [["P-RACK-5", 10, 18500], ["P-SHELF-B", 40, 650]], "receive": {"P-RACK-5": 6, "P-SHELF-B": 40}},
+    {"key": "SEED-PO-04", "vendor": "V04", "lines": [["P-RICE-25", 40, 7800], ["P-OIL-5", 100, 2650]], "receive": "full"},
+    {"key": "SEED-PO-05", "vendor": "V05", "lines": [["P-CHAIR-EX", 12, 24500], ["P-DESK-W", 6, 32000]], "receive": "none"},
+    {"key": "SEED-PO-06", "vendor": "V06", "lines": [["P-CLEAN-5", 60, 1150], ["P-MOP", 30, 950]], "receive": "full"},
+    {"key": "SEED-PO-07", "vendor": "V07", "lines": [["S-FREIGHT", 4, 45000]], "receive": "none"},
+    {"key": "SEED-PO-08", "vendor": "V08", "lines": [["P-LAPTOP", 5, 145000], ["P-MOUSE", 5, 2200]], "receive": "full"},
+    {"key": "SEED-PO-09", "vendor": "V01", "lines": [["P-A4-80", 100, 1450], ["P-STAPLER", 10, 1250]], "receive": {"P-A4-80": 60, "P-STAPLER": 10}},
+    {"key": "SEED-PO-10", "vendor": "V02", "lines": [["P-BOX-M", 1000, 95]], "receive": "full"},
+    {"key": "SEED-PO-11", "vendor": "V03", "lines": [["P-RACK-5", 4, 18500]], "receive": "full"},
+    {"key": "SEED-PO-12", "vendor": "V04", "lines": [["P-RICE-25", 20, 7800]], "receive": "none"}
+  ],
+  "bills": [
+    {"vendor": "N01", "ref": "NL-2026-09-4471", "date": "2026-09-30", "lines": [["Business fibre 100 Mbps, September 2026", 1, 8500]], "tax": "services"}
+  ]
+}
