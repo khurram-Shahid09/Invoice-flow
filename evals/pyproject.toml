@@ -1,0 +1,31 @@
+[project]
+name = "invoiceflow-evals"
+version = "0.1.0"
+description = "Synthetic invoice generator and eval harness (docs/13-testing-and-evals.md)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "jinja2",
+    "pillow",
+    "playwright==1.63.0",  # same as the browsers already installed for WatchOnce
+    "pypdf",
+]
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[tool.uv]
+package = false
+# Versions policy (docs/04-tech-stack.md): never adopt a release younger than 2 weeks.
+exclude-newer = "2026-10-11T00:00:00Z"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM"]
+ignore = ["S101", "S311", "E501"]  # random is for test data, not security
+
+[tool.pytest.ini_options]
+addopts = "-q --strict-markers"
+markers = ["browser: renders with Chromium (needs `playwright install chromium`)"]
