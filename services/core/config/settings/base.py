@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     # invoiceflow
     "common",
     "accounts",
+    "audit",
 ]
 
 MIDDLEWARE = [
