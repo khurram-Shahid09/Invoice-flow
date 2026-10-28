@@ -195,6 +195,8 @@ LOGGING = {
     },
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "line"}},
     "root": {"handlers": ["console"], "level": env.str("LOG_LEVEL", default="INFO")},
+    # One line per ERP/AI request is noise; failures are logged by our own code.
+    "loggers": {"httpx": {"level": "WARNING"}, "httpcore": {"level": "WARNING"}},
 }
 
 # --- Error reporting (off unless a DSN is set) ---
