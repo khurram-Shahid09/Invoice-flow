@@ -1,0 +1,33 @@
+import pytest
+from django.core.management import CommandError, call_command
+
+from accounts.models import Membership, Organization
+
+pytestmark = pytest.mark.django_db
+
+
+def test_seed_demo_creates_one_user_per_role_and_is_repeatable(settings, api) -> None:
+    settings.DEMO_PASSWORD = "demo-password-123"
+    call_command("seed_demo", stdout=None)
+    call_command("seed_demo", stdout=None)  # second run updates, never duplicates
+
+    org = Organization.objects.get(name="Indus Retail (Pvt) Ltd")
+    roles = {m.user.email: m.roles for m in Membership.objects.for_org(org).select_related("user")}
+    assert roles == {
+        "clerk@indus-retail.test": ["clerk"],
+        "approver@indus-retail.test": ["approver"],
+        "controller@indus-retail.test": ["approver", "controller"],
+        "admin@indus-retail.test": ["admin"],
+    }
+    login = api.post(
+        "/api/v1/auth/login",
+        {"email": "clerk@indus-retail.test", "password": "demo-password-123"},
+        format="json",
+    )
+    assert login.status_code == 200
+
+
+def test_seed_demo_needs_a_password(settings) -> None:
+    settings.DEMO_PASSWORD = ""
+    with pytest.raises(CommandError, match="DEMO_PASSWORD"):
+        call_command("seed_demo")
