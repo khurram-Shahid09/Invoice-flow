@@ -1,0 +1,26 @@
+packages:
+  - apps/*
+
+# Versions policy (docs/04-tech-stack.md): never adopt a release younger than 2 weeks.
+minimumReleaseAge: 20160
+
+# Install-script decisions per package (scripts run only when set to true).
+allowBuilds:
+  sharp: false
+  unrs-resolver: false
+
+# Security exception to the 2-week rule: patch releases that fix published advisories.
+# next@16.4.3 fixes GHSA-673q-mjm6-r5xr, GHSA-2464-fhr4-w9xw (critical RCE) and GHSA-p3m5-59mp-jv5r.
+minimumReleaseAgeExclude:
+  - "next@16.4.3"
+  - "eslint-config-next@16.4.3"
+  - "@next/env@16.4.3"
+  - "@next/eslint-plugin-next@16.4.3"
+  - "@next/swc-darwin-arm64@16.4.3"
+  - "@next/swc-darwin-x64@16.4.3"
+  - "@next/swc-linux-arm64-gnu@16.4.3"
+  - "@next/swc-linux-arm64-musl@16.4.3"
+  - "@next/swc-linux-x64-gnu@16.4.3"
+  - "@next/swc-linux-x64-musl@16.4.3"
+  - "@next/swc-win32-arm64-msvc@16.4.3"
+  - "@next/swc-win32-x64-msvc@16.4.3"

@@ -1,8 +1,42 @@
+# Environment & secrets
 .env
-.venv/
+.env.*
+!.env.example
+
+# Dependencies
 node_modules/
+.pnpm-store/
+.venv/
 __pycache__/
+*.py[cod]
+
+# Build output
 .next/
-*.pyc
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage/
+.coverage
+playwright-report/
+test-results/
+
+# Local data
 evals/reports/cache/
 evals/data/private/
+*.log
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Django
+services/core/staticfiles/
