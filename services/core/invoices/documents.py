@@ -3,6 +3,7 @@
 import hashlib
 import io
 from dataclasses import dataclass
+from functools import partial
 
 import pdfplumber
 import pypdfium2 as pdfium
@@ -66,16 +67,34 @@ def _save_page(document: Document, number: int, image: Image.Image, words: list[
     return page
 
 
-def _is_hidden(char: dict) -> bool:
-    color = char.get("non_stroking_color")
-    white = (
-        isinstance(color, tuple | list)
-        and len(color) in (1, 3, 4)
-        and (
-            all(c >= 0.97 for c in color[:3]) if len(color) != 4 else all(c <= 0.03 for c in color)
-        )
-    )
-    return white or float(char.get("size") or 99) < HIDDEN_SIZE_PT
+def _is_white(color: object) -> bool:
+    if not isinstance(color, tuple | list) or len(color) not in (1, 3, 4):
+        return False
+    if len(color) == 4:  # CMYK
+        return all(c <= 0.03 for c in color)
+    return all(c >= 0.97 for c in color[:3])
+
+
+def _is_hidden(char: dict, dark_boxes: list[tuple[float, float, float, float]]) -> bool:
+    """Tiny text, or white text that isn't sitting on a coloured box (e.g. a header band)."""
+    if float(char.get("size") or 99) < HIDDEN_SIZE_PT:
+        return True
+    if not _is_white(char.get("non_stroking_color")):
+        return False
+    x, y = (char["x0"] + char["x1"]) / 2, (char["top"] + char["bottom"]) / 2
+    return not any(x0 <= x <= x1 and top <= y <= bottom for x0, top, x1, bottom in dark_boxes)
+
+
+def _keep(obj: dict, boxes: list[tuple[float, float, float, float]]) -> bool:
+    return obj.get("object_type") != "char" or not _is_hidden(obj, boxes)
+
+
+def _dark_boxes(page) -> list[tuple[float, float, float, float]]:
+    return [
+        (r["x0"], r["top"], r["x1"], r["bottom"])
+        for r in page.rects
+        if r.get("fill") and not _is_white(r.get("non_stroking_color"))
+    ]
 
 
 def render(document: Document) -> list[Page]:
@@ -97,10 +116,9 @@ def render(document: Document) -> list[Page]:
                 break
             image = pdfium_page.render(scale=RENDER_DPI / 72).to_pil()
             width, height = float(plumber_page.width), float(plumber_page.height)
-            visible = plumber_page.filter(
-                lambda obj: obj.get("object_type") != "char" or not _is_hidden(obj)
-            )
-            hidden_chars = [c["text"] for c in plumber_page.chars if _is_hidden(c)]
+            boxes = _dark_boxes(plumber_page)
+            visible = plumber_page.filter(partial(_keep, boxes=boxes))
+            hidden_chars = [c["text"] for c in plumber_page.chars if _is_hidden(c, boxes)]
             if hidden_chars:
                 hidden.append("".join(hidden_chars))
             words = [
