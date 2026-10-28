@@ -168,7 +168,8 @@ CELERY_TASK_ROUTES = {
 }
 
 # --- Demo workspace (manage.py seed_demo) ---
-DEMO_PASSWORD = env.str("DEMO_PASSWORD", default="")
+# .strip(): .env lines may carry padding before a trailing "# ..." comment.
+DEMO_PASSWORD = env.str("DEMO_PASSWORD", default="").strip()
 
 # --- Encryption of bank details and ERP keys (docs/12-security-privacy.md) ---
 FIELD_ENCRYPTION_KEY = env.str("FIELD_ENCRYPTION_KEY", default="")
