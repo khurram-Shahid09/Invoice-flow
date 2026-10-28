@@ -10,6 +10,7 @@ from common.views import healthz, readyz
 api_v1: list[URLPattern | URLResolver] = [
     path("", include("accounts.urls")),
     path("", include("erp.urls")),
+    path("", include("invoices.urls")),
     path("audit", AuditLogListView.as_view(), name="audit-list"),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path("docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
