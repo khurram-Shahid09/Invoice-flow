@@ -70,6 +70,8 @@ Order of attempts against the vendor master (synced from the ERP):
 | `GRN_PENDING` | goods not received yet | – | blocking, auto re-checked on ERP sync |
 | `PO_TOTAL_VARIANCE` | invoice total vs matched PO lines total | ±1% | warning |
 
+**Service lines** (freight, maintenance) have no goods receipt: they're matched 2-way, against the ordered quantity. This needs the product type in the PO line mirror (build plan day 8).
+
 When `GRN_PENDING` is the only blocker, the invoice waits in `needs_review` with "Waiting for goods receipt". The 15-minute ERP sync re-runs checks, and it moves on automatically when the receipt arrives.
 
 ## 4. Non-PO invoices (utilities, services, subscriptions)

@@ -4,12 +4,13 @@
 
 InvoiceFlow is an AI accounts-payable agent. Supplier invoices arrive by email or upload, as PDFs or phone photos. InvoiceFlow reads them, checks them against the purchase order and the goods receipt, catches duplicates and fraud signals, routes exceptions to the right person, and posts approved bills into the ERP. Every field shows where it came from on the page, and every decision shows the rule behind it.
 
-> **Status:** 🛠️ Building the MVP, day 2 of 15 ([build plan](docs/15-roadmap-build-plan.md)).
+> **Status:** 🛠️ Building the MVP, day 3 of 15 ([build plan](docs/15-roadmap-build-plan.md)).
 >
 > | Day | Done |
 > |---|---|
 > | 1 | Repo, Docker infrastructure, Django API with organisations, roles (clerk, approver, controller, admin), sign-in and an append-only audit log; Next.js dashboard shell; CI |
 > | 2 | Odoo seeded with a demo company, vendors, purchase orders and receipts; ERP adapter (Odoo + an in-memory fake); encrypted mirror of vendors and POs with incremental sync |
+> | 3 | Synthetic invoice generator: 10 supplier layouts, 97 invoices (clean, scanned, photographed, 12 safety cases, 5 demo) with answer keys and expected decisions |
 
 ---
 

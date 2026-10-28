@@ -16,7 +16,16 @@ Target: rule and state-machine modules at ≥ 90% line coverage. Lint (ruff, esl
 
 ## Eval dataset
 
-### Synthetic invoice generator (`evals/generate.py`)
+### Synthetic invoice generator (`evals/invoicegen`)
+
+```
+cd evals && uv sync
+uv run python -m invoicegen.generate            # 97 invoices -> evals/data/generated/ (about 7 MB, not committed)
+uv run pytest                                    # dataset checks; rendering tests need Chromium
+```
+
+Output: `files/` (what InvoiceFlow receives), `truth/<case>.json` (the correct extraction), `manifest.json` (kind, layout, vendor, expected route and check codes, and `after` for cases that must be processed after another, like the resent demo invoice). The dataset is deterministic (`--seed 7`): 60 clean, 10 scans, 10 photos, 12 safety cases, 5 demo invoices. Each case is evaluated on its own, against a freshly synced copy of the seed ERP.
+
 Generates PDFs and images **with ground truth JSON**, so evals cost nothing to label:
 - **10 vendor layouts** (HTML templates rendered to PDF with Playwright): different label words ("Invoice No.", "Bill #", "Ref"), table styles, logos, footer totals, Urdu/English mixed headers, multi-page with "continued", tax shown per line or per document.
 - **Variations:** currency (PKR, USD, AED), date formats, discounts, shipping, 1–25 lines.
@@ -48,7 +57,7 @@ Each must **never** be auto-approved:
 |---|---|---|
 | **E1 Extraction** | field-level accuracy (header), line-item accuracy (per field), document exact-match rate; split by clean PDF / scan / photo | header ≥ 97%, lines ≥ 92% (clean PDF); scans ≥ 92% / 85% |
 | **E2 Grounding** | % of non-null values grounded; % of wrong values that grounding caught | ≥ 95% grounded; ≥ 80% of wrong values caught |
-| **E3 Decisions** | straight-through rate on the clean set; **false approvals on the safety set**; correct exception code | STP ≥ 70%; **false approvals = 0**; code accuracy ≥ 95% |
+| **E3 Decisions** | straight-through rate among invoices whose expected route is straight-through; **false approvals on the safety set**; correct exception code | STP ≥ 70%; **false approvals = 0**; code accuracy ≥ 95% |
 | **E4 Providers** | E1–E3 per provider/model, plus cost and latency per invoice | Informs the default model choice |
 | **E5 Hints** | accuracy for vendors with hints vs without; no regression for others | + ≥ 3 points on hinted vendors |
 

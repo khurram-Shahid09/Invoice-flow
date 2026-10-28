@@ -43,7 +43,7 @@ Default seed:
 ## Approver experience
 
 **Email** (MVP):
-- Subject: `Approve: Al-Noor Traders · INV-2291 · PKR 184,500`
+- Subject: `Approve: Al-Noor Traders · INV-2291 · PKR 148,562`
 - Body:
   - the 4 key numbers
   - the reason it needs approval ("Above 50,000 PKR" or "Price 6% above PO")

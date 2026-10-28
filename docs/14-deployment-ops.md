@@ -17,7 +17,7 @@ cd ../../apps/web && pnpm dev             # http://localhost:3100
 ```
 
 - Demo users: `clerk@demo`, `approver@demo`, `controller@demo`, `admin@demo` (password from `.env`, never committed).
-- Send a test invoice: `uv run python ../../evals/send_test_email.py evals/data/demo/INV-2291.pdf` (SMTP to Mailpit), then watch it arrive in the dashboard.
+- Send a test invoice: `uv run python ../../evals/send_test_email.py evals/data/generated/files/INV-2291.pdf` (SMTP to Mailpit), then watch it arrive in the dashboard.
 - Approval emails appear in Mailpit at http://localhost:8026.
 
 ## Demo deployment (low cost)
