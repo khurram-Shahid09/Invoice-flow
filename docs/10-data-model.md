@@ -61,11 +61,13 @@ erDiagram
 ### ERP mirror
 | Table | Key columns |
 |---|---|
-| `erp_connection` | org, kind (odoo/fake/csv), url, db, username, api_key_enc, last_sync_at, status |
-| `erp_vendor` | org, erp_id, name, tax_id, emails (array), domains (array), bank_accounts_enc (array), currency, non_po (bool), created_in_erp_at, category |
-| `erp_po` / `erp_po_line` | org, erp_id, number, vendor, state, currency, requester, department; lines: product_code, description, qty_ordered, qty_received, qty_invoiced, unit_price, tax |
-| `erp_account`, `erp_tax` | org, erp_id, code, name, rate |
-| `erp_bill_ref` | org, erp_id, vendor, ref, ref_norm, total, date, state |
+| `erp_connections` | org (one per org), kind (odoo/fake), url, database, username, secret_enc, sync_state (JSON high-water marks per kind), last_sync_at, last_sync_status, last_error |
+| `erp_sync_runs` | org, full, status, counts (JSON per kind), error, started_at, finished_at |
+| `erp_vendors` | org, erp_id, name, ref, tax_id, tax_id_norm, email, city, currency, bank_accounts_enc / bank_hashes (HMAC index) / bank_masks (arrays), active, erp_updated_at; **local**: domains, non_po, category |
+| `erp_purchase_orders` / `erp_purchase_order_lines` | org, erp_id, number, vendor, state, currency, vendor_ref, order_date, requester, amount_total; lines: position, product_code, description, uom, qty_ordered, qty_received, qty_invoiced, unit_price, tax_rate |
+| `erp_receipts` | org, erp_id, number, po, state, done_at (received quantities live on the PO lines) |
+| `erp_accounts`, `erp_taxes` | org, erp_id, code, name, kind / rate, active |
+| `erp_bill_refs` | org, erp_id, vendor, ref, ref_norm, total, currency, bill_date, state |
 | `erp_post_attempt` | invoice, step (search/create/attach/post), status, erp_id, error, at |
 | `vendor_hint` | vendor, text, proposed_by, confirmed_by, active |
 
