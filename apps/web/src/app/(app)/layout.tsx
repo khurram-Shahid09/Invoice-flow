@@ -9,8 +9,6 @@ import { logout } from "./actions";
 const NAV = [
   { href: "/inbox", label: "Inbox" },
   { href: "/approvals", label: "Approvals" },
-  { href: "/vendors", label: "Vendors" },
-  { href: "/settings", label: "Settings" },
 ] as const;
 
 async function Account() {
