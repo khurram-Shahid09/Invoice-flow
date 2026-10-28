@@ -40,3 +40,6 @@ Thumbs.db
 
 # Django
 services/core/staticfiles/
+
+# Next.js regenerates this on every dev/build run
+apps/web/next-env.d.ts
