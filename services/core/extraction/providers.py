@@ -16,7 +16,9 @@ from django.conf import settings
 from .schema import PROMPT, PROMPT_VERSION, Extraction
 
 log = logging.getLogger(__name__)
-COOLDOWN_S = 3600
+COOLDOWN_S = 3600  # after a daily-quota error
+RETRY_WAIT_S = 15  # after a per-minute limit or an overloaded model
+ROUNDS = 3
 _exhausted: dict[tuple[int, str], float] = {}  # (key index, model) -> retry after
 
 
@@ -63,41 +65,53 @@ def _gemini(images: list[bytes], text_pages: list[str]) -> Result:
         temperature=0,
     )
     last_error = "every key and model is over its free-tier limit; try again later"
-    for model in settings.GEMINI_MODELS:
-        for index, key in enumerate(settings.GEMINI_API_KEYS):
-            if _exhausted.get((index, model), 0) > time.time():
-                continue
-            started = time.monotonic()
-            client = genai.Client(api_key=key)  # keep a reference: it closes when collected
-            try:
-                response = client.models.generate_content(
-                    model=model, contents=contents, config=config
-                )
-            except errors.APIError as exc:
-                if exc.code in (429, 403):  # quota or key problem: skip this key for a while
-                    _exhausted[(index, model)] = time.time() + COOLDOWN_S
-                    log.warning("Gemini key %d on %s unavailable (%s)", index + 1, model, exc.code)
+    for attempt in range(ROUNDS):
+        if attempt:
+            time.sleep(RETRY_WAIT_S)  # per-minute limits reset quickly
+        busy = False
+        for model in settings.GEMINI_MODELS:
+            for index, key in enumerate(settings.GEMINI_API_KEYS):
+                if _exhausted.get((index, model), 0) > time.time():
                     continue
-                if exc.code in (500, 503, 504):  # overloaded model: try the next one
-                    last_error = f"{model} is overloaded"
-                    break
-                raise ExtractionError(f"Gemini error {exc.code}") from exc
-            parsed = response.parsed
-            if not isinstance(parsed, Extraction):
+                started = time.monotonic()
+                client = genai.Client(api_key=key)  # keep a reference: it closes when collected
                 try:
-                    parsed = Extraction.model_validate_json(response.text or "")
-                except ValueError as exc:
-                    raise ExtractionError("The AI's answer didn't match the schema.") from exc
-            usage = response.usage_metadata
-            return Result(
-                parsed,
-                "gemini",
-                model,
-                input_tokens=(usage.prompt_token_count or 0) if usage else 0,
-                output_tokens=(usage.candidates_token_count or 0) if usage else 0,
-                ms=int((time.monotonic() - started) * 1000),
-                meta={"key": index + 1, "prompt": PROMPT_VERSION},
-            )
+                    response = client.models.generate_content(
+                        model=model, contents=contents, config=config
+                    )
+                except errors.APIError as exc:
+                    if exc.code in (429, 403):
+                        # A daily quota rests the key for an hour; a per-minute one only a moment.
+                        daily = exc.code == 403 or "day" in str(exc).lower()
+                        _exhausted[(index, model)] = time.time() + (
+                            COOLDOWN_S if daily else RETRY_WAIT_S
+                        )
+                        busy = busy or not daily
+                        log.warning("Gemini key %d on %s: %s", index + 1, model, exc.code)
+                        continue
+                    if exc.code in (500, 503, 504):  # overloaded model: try the next one
+                        last_error, busy = f"{model} is overloaded", True
+                        break
+                    log.warning("Gemini %s: %s", exc.code, str(exc)[:300])
+                    raise ExtractionError(f"Gemini error {exc.code}") from exc
+                parsed = response.parsed
+                if not isinstance(parsed, Extraction):
+                    try:
+                        parsed = Extraction.model_validate_json(response.text or "")
+                    except ValueError as exc:
+                        raise ExtractionError("The AI's answer didn't match the schema.") from exc
+                usage = response.usage_metadata
+                return Result(
+                    parsed,
+                    "gemini",
+                    model,
+                    input_tokens=(usage.prompt_token_count or 0) if usage else 0,
+                    output_tokens=(usage.candidates_token_count or 0) if usage else 0,
+                    ms=int((time.monotonic() - started) * 1000),
+                    meta={"key": index + 1, "prompt": PROMPT_VERSION},
+                )
+        if not busy:
+            break  # only daily limits left: waiting won't help
     raise ExtractionError(f"Gemini unavailable: {last_error}.")
 
 
@@ -116,7 +130,7 @@ def _fake(filename: str) -> Result:
     def v(value: Any) -> dict:
         return {"value": None if value is None else str(value), "page": 1, "quote": None}
 
-    lines = [{k: v(line.get(k)) for k in line if k != "discount_pct"} for line in truth["lines"]]
+    lines = [{k: v(line.get(k)) for k in line} for line in truth["lines"]]
     data: dict[str, Any] = {
         name: v(truth.get(name))
         for name in Extraction.model_fields

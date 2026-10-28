@@ -86,7 +86,7 @@ def test_gemini_rotates_to_the_next_key_on_quota(monkeypatch, settings) -> None:
         def generate_content(self, **kwargs):
             used.append(self.key)
             if self.key == "key-one":
-                raise errors.ClientError(429, {"error": {"message": "quota"}})
+                raise errors.ClientError(429, {"error": {"message": "quota exceeded per day"}})
             return _response(Extraction.model_validate(answer).model_dump_json())
 
     monkeypatch.setattr(
