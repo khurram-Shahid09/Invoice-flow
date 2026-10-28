@@ -1,9 +1,8 @@
 name: CI
 
+# Manual only (Actions tab -> CI -> Run workflow). Every check also runs locally; see README.
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
