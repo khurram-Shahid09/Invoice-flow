@@ -106,6 +106,9 @@ def _sync(connection: ErpConnection, adapter: ErpAdapter, *, full: bool) -> dict
     with transaction.atomic():
         for kind, items in fetched.items():  # vendors first: the others link to them
             writers[kind](org_id, items)
+        if full:  # a full read is complete: bills gone from the ERP must not count as duplicates
+            present = [b.erp_id for b in fetched["bills"]]
+            ErpBillRef.objects.filter(org_id=org_id).exclude(erp_id__in=present).delete()
         for kind in INCREMENTAL_KINDS:
             newest = max((i.updated_at for i in fetched[kind]), default=None)
             if newest and (since(kind) is None or newest > since(kind)):

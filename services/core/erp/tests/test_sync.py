@@ -152,3 +152,12 @@ def test_connection_secret_is_encrypted(connection) -> None:
     connection.refresh_from_db()
     assert "odoo-api-key-123" not in connection.secret_enc
     assert connection.get_secret() == "odoo-api-key-123"
+
+
+def test_full_sync_forgets_bills_deleted_in_the_erp(connection, erp) -> None:
+    sync_connection(connection, adapter=erp)
+    erp.bills.clear()
+    sync_connection(connection, adapter=erp)  # incremental: can't see deletions
+    assert ErpBillRef.objects.for_org(connection.org).count() == 1
+    sync_connection(connection, adapter=erp, full=True)
+    assert ErpBillRef.objects.for_org(connection.org).count() == 0
