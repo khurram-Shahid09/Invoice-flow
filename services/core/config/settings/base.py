@@ -168,6 +168,12 @@ CELERY_TASK_ROUTES = {
     for queue in ("ingest", "extract", "check", "post")
 }
 
+# --- Local Odoo (infra/odoo/seed.py, seed_demo, contract tests) ---
+ODOO_URL = env.str("ODOO_URL", default="http://localhost:8069").strip()
+ODOO_DB = env.str("ODOO_DB", default="invoiceflow").strip()
+ODOO_API_USER = env.str("ODOO_API_USER", default="ap-bot@indus-retail.test").strip()
+ODOO_API_KEY = env.str("ODOO_API_KEY", default="").strip()
+
 # --- Demo workspace (manage.py seed_demo) ---
 # .strip(): .env lines may carry padding before a trailing "# ..." comment.
 DEMO_PASSWORD = env.str("DEMO_PASSWORD", default="").strip()
