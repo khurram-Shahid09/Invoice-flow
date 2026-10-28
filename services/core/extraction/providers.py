@@ -68,8 +68,9 @@ def _gemini(images: list[bytes], text_pages: list[str]) -> Result:
             if _exhausted.get((index, model), 0) > time.time():
                 continue
             started = time.monotonic()
+            client = genai.Client(api_key=key)  # keep a reference: it closes when collected
             try:
-                response = genai.Client(api_key=key).models.generate_content(
+                response = client.models.generate_content(
                     model=model, contents=contents, config=config
                 )
             except errors.APIError as exc:
