@@ -4,8 +4,9 @@ import os
 os.environ.setdefault("DJANGO_SECRET_KEY", "test-secret-key-not-for-production-" + "x" * 20)
 # Test-only field encryption key (32 bytes, base64).
 os.environ.setdefault(
-    "FIELD_ENCRYPTION_KEY", "dGVzdC1maWVsZC1rZXktMzItYnl0ZXMtbG9uZyEhISE="
-)  # gitleaks:allow (test-only)
+    "FIELD_ENCRYPTION_KEY",
+    "dGVzdC1maWVsZC1rZXktMzItYnl0ZXMtbG9uZyEhISE=",  # gitleaks:allow (test-only)
+)
 os.environ.setdefault(
     "DATABASE_URL", "postgres://invoiceflow:invoiceflow@localhost:5435/invoiceflow"
 )

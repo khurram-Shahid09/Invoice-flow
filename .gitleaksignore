@@ -1,0 +1,3 @@
+# Test-only FIELD_ENCRYPTION_KEY in config/settings/test.py, committed before its allow marker
+# was on the right line. Not a real secret.
+e86ab26a4bc1c6ea25ba3e6561961e7c041a3da7:services/core/config/settings/test.py:generic-api-key:7

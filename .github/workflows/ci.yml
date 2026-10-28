@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: core (Django)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: invoiceflow
+          POSTGRES_PASSWORD: invoiceflow
+          POSTGRES_DB: invoiceflow
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U invoiceflow" --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgres://invoiceflow:invoiceflow@localhost:5432/invoiceflow
+      REDIS_URL: redis://localhost:6379/0
+    defaults:
+      run:
+        working-directory: services/core
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Type-check
+        run: uv run mypy .
+      - name: Migrations up to date
+        run: uv run python manage.py makemigrations --check --dry-run --settings=config.settings.test
+      - name: OpenAPI schema valid (no warnings)
+        run: uv run python manage.py spectacular --file /dev/null --validate --fail-on-warn --settings=config.settings.test
+      - name: Tests
+        run: uv run pytest
+
+  secrets:
+    name: secrets scan (gitleaks)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.24.2 git /repo --no-banner --redact --exit-code 1
+
+  web:
+    name: web (Next.js)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm -r lint
+      - name: Type-check
+        run: pnpm -r typecheck
+      - name: Build
+        run: pnpm -r build
