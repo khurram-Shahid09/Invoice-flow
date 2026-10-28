@@ -23,6 +23,7 @@ class LineItem(BaseModel):
     quantity: Value
     unit: Value
     unit_price: Value
+    discount_pct: Value
     tax_rate_pct: Value
     line_total: Value
 
@@ -67,6 +68,7 @@ LINE_FIELDS = [
     "quantity",
     "unit",
     "unit_price",
+    "discount_pct",
     "tax_rate_pct",
     "line_total",
 ]

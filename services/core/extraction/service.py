@@ -11,7 +11,7 @@ from .providers import extract
 from .schema import HEADER_FIELDS, LINE_FIELDS, Value
 
 AMOUNTS = {"subtotal", "tax_total", "shipping", "total"}
-LINE_AMOUNTS = {"quantity", "unit_price", "tax_rate_pct", "line_total"}
+LINE_AMOUNTS = {"quantity", "unit_price", "discount_pct", "tax_rate_pct", "line_total"}
 
 
 def _typed(name: str, raw: str | None, org) -> str | None:

@@ -217,7 +217,7 @@ def _math(invoice: Invoice, out: list[Check]) -> None:
             continue
         assert qty is not None and price is not None and amount is not None
         rate = _line(line, "tax_rate_pct") or Decimal(0)
-        net = qty * price
+        net = qty * price * (1 - (_line(line, "discount_pct") or Decimal(0)) / 100)
         if (
             abs(net - amount) > MONEY_TOLERANCE
             and abs(net * (1 + rate / 100) - amount) > MONEY_TOLERANCE
