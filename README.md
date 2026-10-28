@@ -4,13 +4,22 @@
 
 InvoiceFlow is an AI accounts-payable agent. Supplier invoices arrive by email or upload, as PDFs or phone photos. InvoiceFlow reads them, checks them against the purchase order and the goods receipt, catches duplicates and fraud signals, routes exceptions to the right person, and posts approved bills into the ERP. Every field shows where it came from on the page, and every decision shows the rule behind it.
 
-> **Status:** 🛠️ Building the MVP, day 3 of 15 ([build plan](docs/15-roadmap-build-plan.md)).
->
-> | Day | Done |
-> |---|---|
-> | 1 | Repo, Docker infrastructure, Django API with organisations, roles (clerk, approver, controller, admin), sign-in and an append-only audit log; Next.js dashboard shell; CI |
-> | 2 | Odoo seeded with a demo company, vendors, purchase orders and receipts; ERP adapter (Odoo + an in-memory fake); encrypted mirror of vendors and POs with incremental sync |
-> | 3 | Synthetic invoice generator: 10 supplier layouts, 97 invoices (clean, scanned, photographed, 12 safety cases, 5 demo) with answer keys and expected decisions |
+> **Status:** ✅ MVP working end to end: upload → AI reads → rules check → approve → posted to Odoo. Email inbox, Slack approvals and more ERPs are next ([roadmap](docs/15-roadmap-build-plan.md)).
+
+## Results
+
+Measured with `manage.py run_evals` on the generated eval set ([reports](evals/reports/)):
+
+| | Real AI: Gemini, 8 invoices (3 layouts, a scan, a phone photo, 3 trick invoices) | Rules only: answer keys, all 97 invoices |
+|---|---|---|
+| Header fields read correctly | **100%** | n/a (input is the answer key) |
+| Line amounts read correctly | **97.9%** | n/a |
+| Correct decision (straight through / approval / review) | **100%** | **100%** |
+| Expected checks raised | **100%** | **100%** |
+| **False approvals on trick invoices** | **0** | **0** |
+| AI cost per invoice | about 3,200 tokens on the free tier | – |
+
+The 12 trick invoices include a duplicate with a new number format, a changed bank account, prices 8% above the PO, more billed than received, totals that don't add up, an unknown vendor, a future date, a wrong currency, and **prompt injection**: hidden white text and a visible note telling "automated systems" to approve. None got through.
 
 ---
 
@@ -84,7 +93,7 @@ See [03 · Architecture](docs/03-architecture.md).
 Needs Docker Desktop, Python with [uv](https://docs.astral.sh/uv/), Node 22 and pnpm.
 
 ```bash
-cp .env.example .env        # then fill DJANGO_SECRET_KEY, FIELD_ENCRYPTION_KEY, ODOO_ADMIN_PASSWORD, DEMO_PASSWORD
+cp .env.example .env        # then fill DJANGO_SECRET_KEY, FIELD_ENCRYPTION_KEY, ODOO_ADMIN_PASSWORD, DEMO_PASSWORD, GEMINI_API_KEYS
 docker compose -f infra/docker-compose.yml up -d                 # Postgres, Redis, S3, Mailpit
 docker compose -f infra/docker-compose.yml --profile erp up -d   # + Odoo (optional, about 1.5 GB RAM)
 
@@ -93,12 +102,17 @@ uv sync
 uv run python manage.py migrate
 uv run python ../../infra/odoo/seed.py      # optional: demo company, vendors, POs in Odoo
 uv run python manage.py seed_demo           # demo users; connects Odoo, or a fake ERP with the same data
-uv run uvicorn config.asgi:application --port 8100
+uv run uvicorn config.asgi:application --port 8100                       # API
+uv run celery -A config worker -Q ingest,extract,check,post --pool=solo  # pipeline (another terminal)
 
 cd ../.. && pnpm install && pnpm dev:web    # http://localhost:3100
 ```
 
 Sign in as `clerk@indus-retail.test`, `approver@…`, `controller@…` or `admin@…` with your `DEMO_PASSWORD`. Odoo runs at http://localhost:8069 and the test mailbox at http://localhost:8026.
+
+**Demo:** generate the invoices (`cd evals && uv sync && uv run python -m invoicegen.generate`), reset (`uv run python ../../infra/odoo/seed.py --reset-bills` and `uv run python manage.py seed_demo --reset`), sign in as the clerk and upload the five files in [docs/16](docs/16-demo-script.md). `LLM_PROVIDER=fake` runs offline from the answer keys; `gemini` uses the free-tier keys in `GEMINI_API_KEYS`.
+
+Evals: `uv run python manage.py run_evals` (offline, all 97) or `--provider gemini --cases clean-09,scan-02,bad-10` (cached, so each case costs one request once).
 
 Checks: `uv run pytest` (add `-m odoo` for the Odoo contract tests), `uv run ruff check .`, `uv run mypy .`, `pnpm lint`, `pnpm typecheck`.
 

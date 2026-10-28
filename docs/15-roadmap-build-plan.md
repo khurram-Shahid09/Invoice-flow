@@ -1,5 +1,22 @@
 # 15 · Roadmap & Build Plan
 
+## Status (28 Oct 2026)
+
+The MVP core was built in days 1–5 by cutting to the main flow; everything else moved to v0.2.
+
+| Built | Where |
+|---|---|
+| Orgs, 4 roles, approval limits, JWT + tokens, append-only audit log | `accounts`, `audit` |
+| Odoo seed, ERP adapter (Odoo + fake), encrypted vendor/PO mirror, incremental sync, idempotent bill posting | `infra/odoo`, `erp` |
+| Upload, file dedupe, page images, text layer with word boxes, hidden-text detection | `invoices/documents.py` |
+| Grounded AI extraction (Gemini free tier, key + model rotation; offline answer keys) | `extraction` |
+| Checks: math, dates, currency, vendor and bank account, duplicates (InvoiceFlow + ERP), 2/3-way PO match, routing | `checks/rules.py` |
+| Pipeline, review/edit/approve/reject API, segregation of duties, retries | `invoices` |
+| Dashboard: inbox with upload, approvals, review screen with on-page highlights | `apps/web` |
+| Eval generator (97 invoices) and `run_evals` with reports | `evals`, `invoices/management` |
+
+**Later (v0.2), not needed for the demo:** email inbox (Mailpit/IMAP), email-link and Slack approvals, approval matrix by amount band, reminders and escalation, vendor hints from corrections, metrics page, invoice history PDF, S3/R2 storage (files are on local disk), SSE live updates (the dashboard polls), QuickBooks/Xero/WatchOnce adapters, VPS deployment.
+
 ## Phases
 
 | Phase | Goal | Duration (est.) | Exit criteria |
