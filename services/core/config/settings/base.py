@@ -178,6 +178,10 @@ ODOO_API_KEY = env.str("ODOO_API_KEY", default="").strip()
 # .strip(): .env lines may carry padding before a trailing "# ..." comment.
 DEMO_PASSWORD = env.str("DEMO_PASSWORD", default="").strip()
 
+CELERY_BEAT_SCHEDULE = {
+    "sync-erp": {"task": "post.sync_all_erp", "schedule": 15 * 60},
+}
+
 # --- Encryption of bank details and ERP keys (docs/12-security-privacy.md) ---
 FIELD_ENCRYPTION_KEY = env.str("FIELD_ENCRYPTION_KEY", default="")
 
