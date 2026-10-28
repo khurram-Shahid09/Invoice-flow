@@ -2,6 +2,10 @@
 
 **Invoices in. Approved bills out. Every decision explained.**
 
+▶️ **[Watch the 2-minute demo](https://youtu.be/einthU8vVAo)** · 📄 **[Case study](https://khurramshahid.vercel.app/invoiceflow)**
+
+[![InvoiceFlow demo](https://khurramshahid.vercel.app/images/invoiceflow/cover.png)](https://youtu.be/einthU8vVAo)
+
 InvoiceFlow is an AI accounts-payable agent. Supplier invoices arrive by email or upload, as PDFs or phone photos. InvoiceFlow reads them, checks them against the purchase order and the goods receipt, catches duplicates and fraud signals, routes exceptions to the right person, and posts approved bills into the ERP. Every field shows where it came from on the page, and every decision shows the rule behind it.
 
 > **Status:** ✅ MVP working end to end: upload → AI reads → rules check → approve → posted to Odoo. Email inbox, Slack approvals and more ERPs are next ([roadmap](docs/15-roadmap-build-plan.md)).
