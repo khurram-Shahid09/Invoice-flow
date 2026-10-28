@@ -9,13 +9,15 @@ CORE_DIR = Path(__file__).resolve().parents[2]  # services/core
 REPO_ROOT = CORE_DIR.parents[1]
 
 env = environ.Env()
+# Values read with .strip() below: django-environ keeps the padding before a trailing
+# "# comment" in .env, which would silently change a secret.
 # Local development reads the repo-root .env. In containers the variables come from the environment.
 if (REPO_ROOT / ".env").is_file():
     # parse_comments: .env.example documents values with trailing "# ..." comments.
     env.read_env(str(REPO_ROOT / ".env"), overwrite=False, parse_comments=True)
 
 APP_ENV = env.str("APP_ENV", default="local")
-SECRET_KEY = env.str("DJANGO_SECRET_KEY")
+SECRET_KEY = env.str("DJANGO_SECRET_KEY").strip()
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
 APP_BASE_URL = env.str("APP_BASE_URL", default="http://localhost:3100")
@@ -175,7 +177,6 @@ ODOO_API_USER = env.str("ODOO_API_USER", default="ap-bot@indus-retail.test").str
 ODOO_API_KEY = env.str("ODOO_API_KEY", default="").strip()
 
 # --- Demo workspace (manage.py seed_demo) ---
-# .strip(): .env lines may carry padding before a trailing "# ..." comment.
 DEMO_PASSWORD = env.str("DEMO_PASSWORD", default="").strip()
 
 CELERY_BEAT_SCHEDULE = {
@@ -183,7 +184,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 # --- Encryption of bank details and ERP keys (docs/12-security-privacy.md) ---
-FIELD_ENCRYPTION_KEY = env.str("FIELD_ENCRYPTION_KEY", default="")
+FIELD_ENCRYPTION_KEY = env.str("FIELD_ENCRYPTION_KEY", default="").strip()
 
 # --- Logging: single-line logs to stdout ---
 LOGGING = {
