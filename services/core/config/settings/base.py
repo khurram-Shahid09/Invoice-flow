@@ -176,6 +176,19 @@ ODOO_DB = env.str("ODOO_DB", default="invoiceflow").strip()
 ODOO_API_USER = env.str("ODOO_API_USER", default="ap-bot@indus-retail.test").strip()
 ODOO_API_KEY = env.str("ODOO_API_KEY", default="").strip()
 
+# --- Uploaded invoices and page images (local disk; S3/R2 later, docs/05) ---
+MEDIA_ROOT = Path(env.str("MEDIA_ROOT", default=str(CORE_DIR / "media")))
+MAX_UPLOAD_MB = 20
+MAX_PAGES = 6  # pages sent to the AI per invoice
+
+# --- AI extraction (docs/06-ai-extraction.md) ---
+LLM_PROVIDER = env.str("LLM_PROVIDER", default="fake").strip().lower()  # gemini | fake
+GEMINI_API_KEYS = [k.strip() for k in env.list("GEMINI_API_KEYS", default=[]) if k.strip()]
+GEMINI_MODELS = env.list("GEMINI_MODELS", default=["gemini-3.6-flash", "gemini-3.5-flash"])
+
+# --- Decisions (docs/07 section 7; per-org overrides in Organization.settings) ---
+STRAIGHT_THROUGH_LIMIT = 50000  # in the org's base currency
+
 # --- Demo workspace (manage.py seed_demo) ---
 DEMO_PASSWORD = env.str("DEMO_PASSWORD", default="").strip()
 
