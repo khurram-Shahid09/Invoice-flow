@@ -347,6 +347,14 @@ def main() -> None:
     wait_for_odoo(odoo)
     create_database(odoo, db, admin_password)
     odoo.login(db, "admin", admin_password)
+    if "--reset-bills" in sys.argv:
+        # Before a demo: remove draft bills InvoiceFlow created, keep the seeded posted one.
+        drafts = odoo.find(
+            "account.move", [("move_type", "=", "in_invoice"), ("state", "=", "draft")]
+        )
+        if drafts:
+            odoo.call("account.move", "unlink", drafts)
+        print(f"Removed {len(drafts)} draft vendor bills.")
     install_apps(odoo)
     company_id = setup_company(odoo)
     taxes = setup_taxes(odoo, company_id)
