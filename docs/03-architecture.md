@@ -20,7 +20,7 @@ flowchart TB
     POST["post queue<br/>ERP posting, sync"]
     BEAT["beat<br/>mail poll, ERP sync, reminders"]
   end
-  PG[("PostgreSQL 17")]
+  PG[("PostgreSQL 16")]
   REDIS[("Redis<br/>broker + pub/sub")]
   S3[("S3 storage<br/>files, page images")]
   LLM["LLM provider<br/>Gemini · Claude · fake"]

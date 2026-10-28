@@ -3,7 +3,8 @@
 ## Local development
 
 ```
-cd infra && docker compose up -d          # Postgres 5435, Redis 6380, SeaweedFS S3 9100, Mailpit 8026, Odoo 8069
+docker compose -f infra/docker-compose.yml up -d                 # Postgres 5435, Redis 6380, S3 9100, Mailpit 8026
+docker compose -f infra/docker-compose.yml --profile erp up -d   # + Odoo 8069 (about 1.5 GB RAM)
 cd services/core
 uv sync
 uv run python manage.py migrate

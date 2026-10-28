@@ -9,7 +9,7 @@ Same core as WatchOnce, so patterns and code can be reused ([ADR-0004](adr/0004-
 | Language / runtime | Python 3.13, managed with **uv** | |
 | Web framework | **Django 6 + DRF** | Admin for back-office fixes; SSE via async views |
 | Background jobs | **Celery 5** with Redis broker, queues `ingest`, `extract`, `check`, `post`; **celery beat** | `--pool=solo` on Windows for dev |
-| Database | **PostgreSQL 17** | `pg_trgm` for fuzzy vendor and duplicate matching |
+| Database | **PostgreSQL 16** | `pg_trgm` for fuzzy vendor and duplicate matching |
 | File storage | **S3 API**: SeaweedFS locally (MinIO no longer publishes images), Cloudflare R2 in the demo deployment | Content-addressed by sha256 |
 | PDF handling | **pypdfium2** (render pages), **pdfplumber** (text layer with word boxes), **pypdf** (split, metadata) | All pure-Python wheels, no system installs |
 | Images | **Pillow** (+ EXIF orientation fix, resize) | |
@@ -37,11 +37,11 @@ Same core as WatchOnce, so patterns and code can be reused ([ADR-0004](adr/0004-
 
 ## Infrastructure (local)
 
-`docker compose up` in `infra/` starts:
+`docker compose -f infra/docker-compose.yml up -d` starts these (Odoo only with `--profile erp`):
 
 | Service | Port | Notes |
 |---|---|---|
-| PostgreSQL 17 (InvoiceFlow) | **5435** | WatchOnce uses 5433, so both can run |
+| PostgreSQL 16 (InvoiceFlow) | **5435** | WatchOnce uses 5433, so both can run |
 | Redis 7 | **6380** | |
 | SeaweedFS (S3) | **9100** | Same image as WatchOnce |
 | Mailpit | **1026** SMTP / **8026** web + API | Inbound test mailbox and outbound approvals |

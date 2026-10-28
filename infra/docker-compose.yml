@@ -1,0 +1,114 @@
+# Local development infrastructure. Run from the repo root:
+#   docker compose -f infra/docker-compose.yml up -d
+# Host ports differ from WatchOnce's so both projects can run side by side (docs/04-tech-stack.md).
+# Odoo needs about 1.5 GB of memory; start it only when you need it:
+#   docker compose -f infra/docker-compose.yml --profile erp up -d
+name: invoiceflow
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: invoiceflow
+      POSTGRES_PASSWORD: invoiceflow
+      POSTGRES_DB: invoiceflow
+    ports:
+      - "${POSTGRES_HOST_PORT:-5435}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U invoiceflow -d invoiceflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_HOST_PORT:-6380}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # S3-compatible stand-in for Cloudflare R2 (MinIO no longer publishes images).
+  s3:
+    image: chrislusf/seaweedfs:4.48
+    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json", "-ip.bind=0.0.0.0"]
+    ports:
+      - "${S3_HOST_PORT:-9100}:8333"
+    volumes:
+      - s3-data:/data
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # One-shot: create the private dev bucket.
+  s3-init:
+    image: chrislusf/seaweedfs:4.48
+    depends_on:
+      s3:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c", "echo 's3.bucket.create -name invoiceflow-dev' | weed shell -master=s3:9333"]
+    restart: "no"
+
+  # Test mailbox: suppliers' invoices are sent here (SMTP 1026) and read through its API;
+  # approval emails land here too. Web UI: http://localhost:8026
+  mailpit:
+    image: axllent/mailpit:v1.31.5
+    environment:
+      MP_MAX_MESSAGES: 2000
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1026}:1025"
+      - "${MAILPIT_HTTP_PORT:-8026}:8025"
+
+  # --- Reference ERP (docs/09-erp-integration.md), profile "erp" ---
+  odoo-db:
+    profiles: ["erp"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  odoo:
+    profiles: ["erp"]
+    image: odoo:18.0-20261015
+    depends_on:
+      odoo-db:
+        condition: service_healthy
+    environment:
+      HOST: odoo-db
+      USER: odoo
+      PASSWORD: odoo
+    command: ["--", "--workers=0", "--limit-memory-hard=1610612736"]
+    ports:
+      - "${ODOO_HOST_PORT:-8069}:8069"
+    volumes:
+      - odoo-data:/var/lib/odoo
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:8069/web/webclient/version_info -H 'Content-Type: application/json' -d '{}' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  postgres-data:
+  redis-data:
+  s3-data:
+  odoo-db-data:
+  odoo-data:
