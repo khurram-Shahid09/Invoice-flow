@@ -12,6 +12,7 @@ Before running: services up (API, worker, dashboard, Odoo), then reset:
 """
 
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -149,14 +150,14 @@ def clerk_part(browser) -> dict:
     clip.shot("03-inbox-sorted")
     clip.mark("inbox_read")
 
-    open_invoice(clip, "INV-2291")
+    open_invoice(clip, "straight-through limit")  # the original INV-2291 (its unique reason)
     clip.mark("review")
     for label, hold in [("Vendor", 1.4), ("Invoice number", 1.4), ("PO number", 1.4), ("Total", 2.2)]:
         hover_field(clip, label, hold)
     clip.shot("04-review-highlight")
     clip.mark("review_end")
 
-    open_invoice(clip, "INV 2291")
+    open_invoice(clip, "Already received")  # the resent copy
     clip.mark("duplicate")
     hover_field(clip, "Invoice number", 2.5)
     clip.shot("05-duplicate")
@@ -215,12 +216,10 @@ def odoo_part(browser, bill_url: str) -> dict:
     page.wait_for_selector(".o_form_view", timeout=60_000)
     clip.pause(3)
     clip.mark("bill")
-    for target in ["text=Al-Noor Traders", "text=A4 Paper", "text=148,562"]:
-        try:
-            clip.point(target, steps=24)
-            clip.pause(1.6)
-        except AssertionError:
-            pass
+    # Odoo shows field values in inputs, so point at visible labels and the PO button.
+    for target in ["text=P00001", "text=Bill Reference", ".o_data_row >> nth=0", ".o_data_row >> nth=1", ".oe_subtotal_footer, .o_tax_totals"]:
+        clip.point(target, steps=24)
+        clip.pause(1.8)
     clip.shot("09-odoo-bill")
     clip.mark("bill_end")
     path = clip.close()
@@ -237,11 +236,15 @@ def main() -> None:
         def save() -> None:  # after every part, so a later failure keeps the earlier marks
             (RAW / "marks.json").write_text(json.dumps(marks, indent=2), encoding="utf-8")
 
-        marks["clerk"] = clerk_part(browser)
-        save()
-        marks["controller"], bill_url = controller_part(browser)
-        marks["bill_url"] = bill_url
-        save()
+        if "--odoo-only" in sys.argv:  # re-take only the Odoo scene
+            marks = json.loads((RAW / "marks.json").read_text(encoding="utf-8"))
+            bill_url = marks["bill_url"]
+        else:
+            marks["clerk"] = clerk_part(browser)
+            save()
+            marks["controller"], bill_url = controller_part(browser)
+            marks["bill_url"] = bill_url
+            save()
         marks["odoo"] = odoo_part(browser, bill_url)
         save()
         browser.close()
