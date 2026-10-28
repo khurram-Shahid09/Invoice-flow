@@ -14,6 +14,7 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   cacheComponents: true,
   devIndicators: false, // keeps demo recordings and screenshots clean
+  experimental: { cpus: 2 }, // fewer build workers: builds run out of memory on small machines
   poweredByHeader: false,
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
