@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "common",
     "accounts",
     "audit",
+    "erp",
 ]
 
 MIDDLEWARE = [
