@@ -1,0 +1,45 @@
+{% import "_parts.html.j2" as parts %}
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body { font-family: "Segoe UI", Helvetica, sans-serif; margin: 0; color: #1f2937; font-size: 13px; }
+  .band { background: #0e7490; color: #fff; padding: 26px 40px; display: flex; justify-content: space-between; }
+  .band h1 { margin: 0; font-size: 24px; letter-spacing: 1px; } .band small { opacity: .85; }
+  .wrap { padding: 24px 40px; } .row { display: flex; gap: 40px; }
+  .label { color: #0e7490; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th { text-align: left; border-bottom: 2px solid #0e7490; padding: 8px 4px; font-size: 12px; }
+  td { padding: 8px 4px; border-bottom: 1px solid #e5e7eb; } .num { text-align: right; }
+  .sum { width: 45%; margin-left: auto; } .sum td { border: none; padding: 4px; }
+  .big td { font-size: 17px; font-weight: 700; color: #0e7490; }
+  .bank { margin-top: 20px; background: #f0f9ff; padding: 10px; font-size: 12px; } .note { font-size: 12px; }
+</style></head><body>
+<div class="band">
+  <div><h1>{{ inv.vendor.name }}</h1><small>{{ inv.vendor.address }} · {{ inv.vendor.email }}</small></div>
+  <div style="text-align:right"><div style="font-size:22px;font-weight:700">BILL</div><div>Bill # {{ inv.invoice_number }}</div></div>
+</div>
+<div class="wrap">
+  <div class="row">
+    <div><div class="label">Billed to</div>{{ inv.buyer.name }}<br>{{ inv.buyer.address }}</div>
+    <div><div class="label">Bill date</div>{{ date(inv.invoice_date) }}
+      {% if inv.due_date %}<div class="label" style="margin-top:6px">Payment due</div>{{ date(inv.due_date) }}{% endif %}</div>
+    <div><div class="label">Tax registration</div>NTN {{ inv.vendor.tax_id }}
+      {% if inv.po_number %}<div class="label" style="margin-top:6px">Your order</div>{{ inv.po_number }}{% endif %}</div>
+  </div>
+  <table>
+    <tr><th>Item</th><th class="num">Quantity</th><th>Unit</th><th class="num">Price</th><th class="num">Amount</th></tr>
+    {% for line in inv.lines %}
+    <tr><td>{{ line.description }}</td><td class="num">{{ qty(line.quantity) }}</td><td>{{ line.unit or "" }}</td>
+        <td class="num">{{ money(line.unit_price) }}</td><td class="num">{{ money(line.total) }}</td></tr>
+    {% endfor %}
+  </table>
+  <table class="sum">
+    <tr><td>Subtotal</td><td class="num">{{ money(inv.subtotal) }}</td></tr>
+    <tr><td>GST {{ pct(inv.tax_rate) }}</td><td class="num">{{ money(inv.tax_total) }}</td></tr>
+    {% if inv.shipping %}<tr><td>Delivery</td><td class="num">{{ money(inv.shipping) }}</td></tr>{% endif %}
+    <tr class="big"><td>Amount due</td><td class="num">{{ money(inv.total) }}</td></tr>
+  </table>
+  {% if inv.payment_terms %}<p>Terms: {{ inv.payment_terms }}</p>{% endif %}
+  {{ parts.notes(inv) }}
+  {{ parts.bank(inv, shows) }}
+</div>
+{{ parts.second_page(inv, shows) }}
+</body></html>

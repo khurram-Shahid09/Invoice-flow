@@ -1,0 +1,32 @@
+{% import "_parts.html.j2" as parts %}
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body { font-family: Tahoma, sans-serif; margin: 38px; font-size: 13px; color: #111827; }
+  .top { border-left: 6px solid #f59e0b; padding-left: 14px; } h1 { margin: 0; font-size: 22px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 22px 0; }
+  .grid div { background: #fffbeb; padding: 8px; } .k { font-size: 11px; color: #92400e; }
+  table { width: 100%; border-collapse: collapse; } th { text-align: left; border-bottom: 2px solid #f59e0b; padding: 6px; }
+  td { padding: 6px; border-bottom: 1px solid #eee; } .num { text-align: right; } .bank, .note { font-size: 12px; }
+</style></head><body>
+<div class="top"><h1>{{ inv.vendor.name }}</h1>Freight &amp; logistics · {{ inv.vendor.address }} · {{ inv.vendor.email }}<br>NTN: {{ inv.vendor.tax_id }}</div>
+<div class="grid">
+  <div><div class="k">SERVICE INVOICE NO.</div>{{ inv.invoice_number }}</div>
+  <div><div class="k">INVOICE DATE</div>{{ date(inv.invoice_date) }}</div>
+  <div><div class="k">CLIENT</div>{{ inv.buyer.name }}</div>
+  {% if inv.po_number %}<div><div class="k">WORK ORDER / PO</div>{{ inv.po_number }}</div>{% endif %}
+  {% if inv.due_date %}<div><div class="k">DUE DATE</div>{{ date(inv.due_date) }}</div>{% endif %}
+</div>
+<table>
+  <tr><th>Service</th><th class="num">Trips</th><th>Unit</th><th class="num">Rate per trip</th><th class="num">Charges</th></tr>
+  {% for line in inv.lines %}
+  <tr><td>{{ line.description }}</td><td class="num">{{ qty(line.quantity) }}</td><td>{{ line.unit or "" }}</td>
+      <td class="num">{{ money(line.unit_price) }}</td><td class="num">{{ money(line.total) }}</td></tr>
+  {% endfor %}
+  <tr><td colspan="4" class="num">Charges</td><td class="num">{{ money(inv.subtotal) }}</td></tr>
+  <tr><td colspan="4" class="num">Sales tax on services ({{ pct(inv.tax_rate) }})</td><td class="num">{{ money(inv.tax_total) }}</td></tr>
+  <tr><td colspan="4" class="num"><b>Total due</b></td><td class="num"><b>{{ money(inv.total) }}</b></td></tr>
+</table>
+{% if inv.payment_terms %}<p>Payment terms: {{ inv.payment_terms }}</p>{% endif %}
+{{ parts.notes(inv) }}
+{{ parts.bank(inv, shows) }}
+{{ parts.second_page(inv, shows) }}
+</body></html>

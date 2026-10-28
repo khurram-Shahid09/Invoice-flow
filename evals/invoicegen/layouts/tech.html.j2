@@ -1,0 +1,33 @@
+{% import "_parts.html.j2" as parts %}
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body { font-family: Consolas, "Segoe UI", sans-serif; margin: 0; font-size: 12.5px; color: #0f172a; }
+  .side { position: fixed; left: 0; top: 0; bottom: 0; width: 10px; background: #4f46e5; }
+  .wrap { margin: 34px 40px 34px 50px; } h1 { margin: 0; font-size: 26px; color: #4f46e5; }
+  .meta { display: flex; justify-content: space-between; margin-top: 18px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 18px; } th { background: #eef2ff; padding: 7px; text-align: left; }
+  td { padding: 7px; border-bottom: 1px solid #e2e8f0; } .num { text-align: right; } .bank, .note { font-size: 12px; }
+</style></head><body><div class="side"></div><div class="wrap">
+<h1>{{ inv.vendor.name }}</h1><div>{{ inv.vendor.address }} · {{ inv.vendor.email }} · NTN {{ inv.vendor.tax_id }}</div>
+<div class="meta">
+  <div>Invoice # <b>{{ inv.invoice_number }}</b><br>Issued {{ date(inv.invoice_date) }}{% if inv.due_date %}<br>Due {{ date(inv.due_date) }}{% endif %}</div>
+  <div style="text-align:right">Customer: {{ inv.buyer.name }}{% if inv.po_number %}<br>PO reference: {{ inv.po_number }}{% endif %}</div>
+</div>
+<table>
+  <tr><th>SKU</th><th>Product</th><th class="num">Qty</th><th>Unit</th><th class="num">Unit price</th><th class="num">Amount</th></tr>
+  {% for line in inv.lines %}
+  <tr><td>{{ line.product_code or "" }}</td><td>{{ line.description }}</td><td class="num">{{ qty(line.quantity) }}</td><td>{{ line.unit or "" }}</td>
+      <td class="num">{{ money(line.unit_price) }}</td><td class="num">{{ money(line.total) }}</td></tr>
+  {% endfor %}
+</table>
+<table style="width:45%;margin-left:auto">
+  <tr><td>Subtotal</td><td class="num">{{ money(inv.subtotal) }}</td></tr>
+  <tr><td>GST ({{ pct(inv.tax_rate) }})</td><td class="num">{{ money(inv.tax_total) }}</td></tr>
+  {% if inv.shipping %}<tr><td>Courier</td><td class="num">{{ money(inv.shipping) }}</td></tr>{% endif %}
+  <tr><td><b>Total ({{ inv.currency }})</b></td><td class="num"><b>{{ money(inv.total) }}</b></td></tr>
+</table>
+<p style="font-size:11px;color:#475569">Warranty: 1 year on hardware. Serial numbers are listed on the delivery challan.</p>
+{% if inv.payment_terms %}<p>Terms: {{ inv.payment_terms }}</p>{% endif %}
+{{ parts.notes(inv) }}
+{{ parts.bank(inv, shows) }}
+{{ parts.second_page(inv, shows) }}
+</div></body></html>

@@ -1,0 +1,38 @@
+{% import "_parts.html.j2" as parts %}
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body { font-family: "Courier New", monospace; margin: 40px; font-size: 12.5px; }
+  h1 { text-align: center; font-size: 18px; margin: 0 0 4px; } .c { text-align: center; }
+  hr { border: 0; border-top: 1px dashed #000; } table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 4px 3px; } th { border-bottom: 1px dashed #000; text-align: left; } .num { text-align: right; }
+  .bank, .note { font-size: 12px; }
+</style></head><body>
+<h1>{{ inv.vendor.name | upper }}</h1>
+<div class="c">{{ inv.vendor.address }}</div>
+<div class="c">NTN {{ inv.vendor.tax_id }}</div>
+<hr><h1>SALES TAX INVOICE</h1><hr>
+<table>
+  <tr><td>Invoice Serial No: {{ inv.invoice_number }}</td><td class="num">Date: {{ date(inv.invoice_date) }}</td></tr>
+  <tr><td>Buyer: {{ inv.buyer.name }}</td><td class="num">Buyer NTN: {{ inv.buyer.tax_id }}</td></tr>
+  {% if inv.po_number %}<tr><td>Purchase Order: {{ inv.po_number }}</td><td></td></tr>{% endif %}
+</table>
+<hr>
+<table>
+  <tr><th>Code</th><th>Description of Goods</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Value Excl. Tax</th></tr>
+  {% for line in inv.lines %}
+  <tr><td>{{ line.product_code or "" }}</td><td>{{ line.description }}</td><td class="num">{{ qty(line.quantity) }}</td>
+      <td class="num">{{ money(line.unit_price) }}</td><td class="num">{{ money(line.total) }}</td></tr>
+  {% endfor %}
+</table>
+<hr>
+<table>
+  <tr><td>Value Excluding Sales Tax</td><td class="num">{{ money(inv.subtotal) }}</td></tr>
+  <tr><td>Sales Tax Payable @ {{ pct(inv.tax_rate) }}</td><td class="num">{{ money(inv.tax_total) }}</td></tr>
+  {% if inv.shipping %}<tr><td>Freight</td><td class="num">{{ money(inv.shipping) }}</td></tr>{% endif %}
+  <tr><td><b>Value Including Sales Tax ({{ inv.currency }})</b></td><td class="num"><b>{{ money(inv.total) }}</b></td></tr>
+</table>
+<hr>
+{% if inv.payment_terms %}<p>Payment: {{ inv.payment_terms }}</p>{% endif %}
+{{ parts.notes(inv) }}
+{{ parts.bank(inv, shows) }}
+{{ parts.second_page(inv, shows) }}
+</body></html>

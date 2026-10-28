@@ -1,0 +1,36 @@
+{% import "_parts.html.j2" as parts %}
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body { font-family: "Times New Roman", serif; margin: 34px; font-size: 13px; }
+  .box { border: 2px solid #000; } .hdr { display: flex; border-bottom: 2px solid #000; }
+  .hdr > div { padding: 10px; } .hdr > div + div { border-left: 2px solid #000; }
+  h1 { margin: 0; font-size: 21px; text-transform: uppercase; }
+  table { width: 100%; border-collapse: collapse; } td, th { border: 1px solid #000; padding: 5px; }
+  th { font-size: 12px; } .num { text-align: right; } .bank { padding: 10px; font-size: 12px; }
+  .note { padding: 0 10px; font-size: 12px; }
+</style></head><body>
+<div class="box">
+  <div class="hdr">
+    <div style="flex:2"><h1>{{ inv.vendor.name }}</h1>{{ inv.vendor.address }}<br>NTN / STRN: {{ inv.vendor.tax_id }}</div>
+    <div style="flex:1"><b>INVOICE</b><br>Invoice #: {{ inv.invoice_number }}<br>Date: {{ date(inv.invoice_date) }}
+      {% if inv.due_date %}<br>Due: {{ date(inv.due_date) }}{% endif %}
+      {% if inv.po_number %}<br>Ref PO: {{ inv.po_number }}{% endif %}</div>
+  </div>
+  <div style="padding:8px 10px;border-bottom:2px solid #000">Customer: <b>{{ inv.buyer.name }}</b>, {{ inv.buyer.address }}</div>
+  <table>
+    <tr><th>S.No</th><th>Item Code</th><th>Particulars</th><th>UOM</th><th>Qty</th><th>Unit Rate</th><th>Value</th><th>Tax %</th><th>Tax</th><th>Value incl. Tax</th></tr>
+    {% for line in inv.lines %}
+    {% set tax = (line.total * line.tax_rate_pct / 100) | round(2) %}
+    <tr><td>{{ loop.index }}</td><td>{{ line.product_code or "" }}</td><td>{{ line.description }}</td><td>{{ line.unit or "" }}</td>
+      <td class="num">{{ qty(line.quantity) }}</td><td class="num">{{ money(line.unit_price) }}</td><td class="num">{{ money(line.total) }}</td>
+      <td class="num">{{ pct(line.tax_rate_pct) }}</td><td class="num">{{ "{:,.2f}".format(tax) }}</td><td class="num">{{ "{:,.2f}".format(line.total + tax) }}</td></tr>
+    {% endfor %}
+    <tr><td colspan="6" class="num"><b>Totals</b></td><td class="num">{{ money(inv.subtotal) }}</td><td></td><td class="num">{{ money(inv.tax_total) }}</td><td class="num"><b>{{ money(inv.total) }}</b></td></tr>
+  </table>
+  {% if inv.shipping %}<div style="padding:8px 10px">Carriage charges: {{ money(inv.shipping) }}</div>{% endif %}
+  <div style="padding:8px 10px;border-top:2px solid #000">Grand Total ({{ inv.currency }}): <b>{{ money(inv.total) }}</b>
+    {% if inv.payment_terms %} &nbsp; Terms: {{ inv.payment_terms }}{% endif %}</div>
+  {{ parts.notes(inv) }}
+  {{ parts.bank(inv, shows) }}
+</div>
+{{ parts.second_page(inv, shows) }}
+</body></html>

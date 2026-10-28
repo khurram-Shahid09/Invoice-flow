@@ -1,0 +1,48 @@
+{% import "_parts.html.j2" as parts %}
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body { font-family: Arial, sans-serif; color: #111; margin: 36px; font-size: 13px; }
+  .top { display: flex; justify-content: space-between; border-bottom: 2px solid #111; padding-bottom: 10px; }
+  .vendor h1 { margin: 0; font-size: 22px; } .urdu { font-size: 16px; direction: rtl; color: #444; }
+  .meta td { padding: 2px 8px; } .meta td:first-child { font-weight: bold; }
+  table.items { width: 100%; border-collapse: collapse; margin-top: 18px; }
+  .items th, .items td { border: 1px solid #999; padding: 6px; } .items th { background: #eee; }
+  .num { text-align: right; } .totals { margin-left: auto; margin-top: 10px; }
+  .totals td { padding: 4px 10px; } .grand td { font-weight: bold; border-top: 2px solid #111; }
+  .bank { margin-top: 18px; font-size: 12px; } .note { font-size: 12px; color: #333; }
+</style></head><body>
+<div class="top">
+  <div class="vendor">
+    <h1>{{ inv.vendor.name }}</h1>
+    <div>{{ inv.vendor.address }}</div>
+    <div>NTN: {{ inv.vendor.tax_id }} &nbsp;|&nbsp; {{ inv.vendor.email }}</div>
+  </div>
+  <div>
+    <div style="font-size:20px;font-weight:bold;text-align:right">SALES TAX INVOICE</div>
+    <div class="urdu">سیلز ٹیکس انوائس</div>
+    <table class="meta">
+      <tr><td>Invoice No.</td><td>{{ inv.invoice_number }}</td></tr>
+      <tr><td>Date</td><td>{{ date(inv.invoice_date) }}</td></tr>
+      {% if inv.due_date %}<tr><td>Due Date</td><td>{{ date(inv.due_date) }}</td></tr>{% endif %}
+      {% if inv.po_number %}<tr><td>P.O. No.</td><td>{{ inv.po_number }}</td></tr>{% endif %}
+    </table>
+  </div>
+</div>
+<p><b>Bill To:</b> {{ inv.buyer.name }}, {{ inv.buyer.address }} (NTN {{ inv.buyer.tax_id }})</p>
+<table class="items">
+  <tr><th>#</th><th>Code</th><th>Description</th><th>Unit</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr>
+  {% for line in inv.lines %}
+  <tr><td>{{ loop.index }}</td><td>{{ line.product_code or "" }}</td><td>{{ line.description }}</td><td>{{ line.unit or "" }}</td>
+      <td class="num">{{ qty(line.quantity) }}</td><td class="num">{{ money(line.unit_price) }}</td><td class="num">{{ money(line.total) }}</td></tr>
+  {% endfor %}
+</table>
+<table class="totals">
+  <tr><td>Value excl. sales tax</td><td class="num">{{ money(inv.subtotal) }}</td></tr>
+  <tr><td>Sales tax @ {{ pct(inv.tax_rate) }}</td><td class="num">{{ money(inv.tax_total) }}</td></tr>
+  {% if inv.shipping %}<tr><td>Freight</td><td class="num">{{ money(inv.shipping) }}</td></tr>{% endif %}
+  <tr class="grand"><td>Total ({{ inv.currency }})</td><td class="num">{{ money(inv.total) }}</td></tr>
+</table>
+{% if inv.payment_terms %}<p>Payment terms: {{ inv.payment_terms }}</p>{% endif %}
+{{ parts.notes(inv) }}
+{% if inv.pages == 1 %}{{ parts.bank(inv, shows) }}{% endif %}
+{{ parts.second_page(inv, shows) }}
+</body></html>

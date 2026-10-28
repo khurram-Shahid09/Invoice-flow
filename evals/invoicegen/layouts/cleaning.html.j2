@@ -1,0 +1,32 @@
+{% import "_parts.html.j2" as parts %}
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body { font-family: "Segoe Print", "Comic Sans MS", cursive; margin: 36px; font-size: 12.5px; color: #134e4a; }
+  h1 { margin: 0; font-size: 26px; } .line { border-bottom: 2px solid #134e4a; margin: 8px 0 14px; }
+  table { width: 100%; border-collapse: collapse; } th { text-align: left; border-bottom: 1px solid #134e4a; padding: 4px; }
+  td { padding: 3px 4px; } .num { text-align: right; } .bank, .note { font-size: 11.5px; }
+  thead { display: table-header-group; } tr { break-inside: avoid; }
+</style></head><body>
+<h1>{{ inv.vendor.name }}</h1>
+<div>{{ inv.vendor.email }} · NTN {{ inv.vendor.tax_id }}</div>
+<div class="line"></div>
+<div style="display:flex;justify-content:space-between">
+  <div>To: {{ inv.buyer.name }}</div>
+  <div>Invoice: {{ inv.invoice_number }}<br>Date: {{ date(inv.invoice_date) }}{% if inv.due_date %}<br>Please pay by {{ date(inv.due_date) }}{% endif %}</div>
+</div>
+<table style="margin-top:12px">
+  <thead><tr><th>Work done</th><th class="num">Visits</th><th>Unit</th><th class="num">Rate</th><th class="num">Disc.</th><th class="num">Amount</th></tr></thead>
+  {% for line in inv.lines %}
+  <tr><td>{{ line.description }}</td><td class="num">{{ qty(line.quantity) }}</td><td>{{ line.unit or "" }}</td><td class="num">{{ money(line.unit_price) }}</td>
+      <td class="num">{{ pct(line.discount_pct) }}</td><td class="num">{{ money(line.total) }}</td></tr>
+  {% endfor %}
+</table>
+<div class="line"></div>
+<table style="width:50%;margin-left:auto">
+  <tr><td>Total before tax</td><td class="num">{{ money(inv.subtotal) }}</td></tr>
+  <tr><td>Services tax {{ pct(inv.tax_rate) }}</td><td class="num">{{ money(inv.tax_total) }}</td></tr>
+  <tr><td><b>Please pay ({{ inv.currency }})</b></td><td class="num"><b>{{ money(inv.total) }}</b></td></tr>
+</table>
+{{ parts.notes(inv) }}
+{{ parts.bank(inv, shows) }}
+{{ parts.second_page(inv, shows) }}
+</body></html>

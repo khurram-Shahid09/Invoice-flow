@@ -1,0 +1,42 @@
+{% import "_parts.html.j2" as parts %}
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body { font-family: Georgia, serif; margin: 44px; color: #3b2f2f; font-size: 13px; }
+  .head { display: flex; align-items: center; gap: 16px; }
+  .logo { width: 56px; height: 56px; border-radius: 50%; background: #7c2d12; color: #fff; display: flex;
+          align-items: center; justify-content: center; font-size: 22px; font-weight: bold; }
+  h1 { margin: 0; font-size: 24px; color: #7c2d12; } .cols { display: flex; justify-content: space-between; margin-top: 26px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 22px; } th { background: #7c2d12; color: #fff; padding: 7px; text-align: left; }
+  td { padding: 7px; border-bottom: 1px solid #d6c7c7; } .num { text-align: right; }
+  .tot { width: 40%; margin-left: auto; } .tot td { border: none; } .bank, .note { font-size: 12px; }
+</style></head><body>
+<div class="head">
+  <div class="logo">{{ inv.vendor.name[0] }}</div>
+  <div><h1>{{ inv.vendor.name }}</h1><div>{{ inv.vendor.address }} · {{ inv.vendor.email }} · NTN {{ inv.vendor.tax_id }}</div></div>
+</div>
+<div class="cols">
+  <div><b>Invoice to</b><br>{{ inv.buyer.name }}<br>{{ inv.buyer.address }}</div>
+  <div style="text-align:right">
+    <div style="font-size:20px;letter-spacing:2px">INVOICE</div>
+    Ref: {{ inv.invoice_number }}<br>{{ date(inv.invoice_date) }}
+    {% if inv.due_date %}<br>Due {{ date(inv.due_date) }}{% endif %}
+    {% if inv.po_number %}<br>Customer PO: {{ inv.po_number }}{% endif %}
+  </div>
+</div>
+<table>
+  <tr><th>Description</th><th class="num">Qty</th><th>Unit</th><th class="num">Unit price</th><th class="num">Total</th></tr>
+  {% for line in inv.lines %}
+  <tr><td>{{ line.description }}</td><td class="num">{{ qty(line.quantity) }}</td><td>{{ line.unit or "" }}</td>
+      <td class="num">{{ money(line.unit_price) }}</td><td class="num">{{ money(line.total) }}</td></tr>
+  {% endfor %}
+</table>
+<table class="tot">
+  <tr><td>Net amount</td><td class="num">{{ money(inv.subtotal) }}</td></tr>
+  <tr><td>Sales tax ({{ pct(inv.tax_rate) }})</td><td class="num">{{ money(inv.tax_total) }}</td></tr>
+  {% if inv.shipping %}<tr><td>Delivery &amp; installation</td><td class="num">{{ money(inv.shipping) }}</td></tr>{% endif %}
+  <tr><td><b>Total payable</b></td><td class="num"><b>{{ money(inv.total) }}</b></td></tr>
+</table>
+{% if inv.payment_terms %}<p>Terms of payment: {{ inv.payment_terms }}</p>{% endif %}
+{{ parts.notes(inv) }}
+{{ parts.bank(inv, shows) }}
+{{ parts.second_page(inv, shows) }}
+</body></html>

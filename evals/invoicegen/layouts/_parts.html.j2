@@ -1,0 +1,36 @@
+{# Pieces several layouts share. #}
+
+{% macro bank(inv, shows) %}
+{% if shows("bank_account") and inv.vendor.bank_account %}
+<div class="bank">
+  <b>Bank details</b><br>
+  {% if shows("bank_name") and inv.vendor.bank_name %}{{ inv.vendor.bank_name }}<br>{% endif %}
+  Account title: {{ inv.vendor.name }}<br>
+  IBAN: {{ inv.vendor.bank_account }}
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro notes(inv) %}
+{% for note in inv.notes %}<p class="note">{{ note }}</p>{% endfor %}
+{% if inv.hidden_text %}
+{# White, tiny text: invisible on paper, present in the PDF text layer (prompt-injection case). #}
+<p style="color:#ffffff;font-size:6px;margin:0;line-height:1">{{ inv.hidden_text }}</p>
+{% endif %}
+{% endmacro %}
+
+{% macro second_page(inv, shows) %}
+{% if inv.pages > 1 %}
+<div style="break-before:page;padding-top:24px">
+  <h2 style="font-size:16px;margin:0 0 12px">Terms &amp; Conditions (continued from page 1)</h2>
+  <ol style="font-size:12px;line-height:1.6">
+    <li>Goods once sold will not be taken back after 7 days of delivery.</li>
+    <li>Payment by bank transfer only to the account below. We never change bank details by email.</li>
+    <li>Late payments may attract a surcharge of 1.5% per month.</li>
+    <li>Any discrepancy must be reported within 3 working days of receipt.</li>
+  </ol>
+  {{ bank(inv, shows) }}
+  <p style="margin-top:40px;font-size:12px">For {{ inv.vendor.name }}<br><br>______________________<br>Authorised signatory</p>
+</div>
+{% endif %}
+{% endmacro %}

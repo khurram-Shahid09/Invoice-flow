@@ -1,0 +1,31 @@
+{% import "_parts.html.j2" as parts %}
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body { font-family: Verdana, sans-serif; margin: 30px; font-size: 11.5px; }
+  .hdr { display: flex; justify-content: space-between; } h1 { margin: 0; font-size: 17px; color: #166534; }
+  .tag { background: #166534; color: #fff; padding: 3px 8px; font-weight: bold; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; } th { background: #dcfce7; text-align: left; padding: 4px; }
+  td { padding: 4px; border-bottom: 1px dotted #999; } .num { text-align: right; } .bank, .note { font-size: 11px; }
+</style></head><body>
+<div class="hdr">
+  <div><h1>{{ inv.vendor.name }}</h1>{{ inv.vendor.address }}<br>{{ inv.vendor.email }} · NTN {{ inv.vendor.tax_id }}</div>
+  <div style="text-align:right"><span class="tag">INVOICE</span><br>No: {{ inv.invoice_number }}<br>Dated: {{ date(inv.invoice_date) }}
+    {% if inv.due_date %}<br>Pay by: {{ date(inv.due_date) }}{% endif %}
+    {% if inv.po_number %}<br>PO#: {{ inv.po_number }}{% endif %}</div>
+</div>
+<div style="margin-top:8px">Sold to: {{ inv.buyer.name }} — {{ inv.buyer.address }}</div>
+<table>
+  <tr><th>Item code</th><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Line total</th></tr>
+  {% for line in inv.lines %}
+  <tr><td>{{ line.product_code or "" }}</td><td>{{ line.description }}</td><td class="num">{{ qty(line.quantity) }}</td>
+      <td class="num">{{ money(line.unit_price) }}</td><td class="num">{{ money(line.total) }}</td></tr>
+  {% endfor %}
+  <tr><td colspan="4" class="num">Sub-total</td><td class="num">{{ money(inv.subtotal) }}</td></tr>
+  <tr><td colspan="4" class="num">GST {{ pct(inv.tax_rate) }}</td><td class="num">{{ money(inv.tax_total) }}</td></tr>
+  {% if inv.shipping %}<tr><td colspan="4" class="num">Transport</td><td class="num">{{ money(inv.shipping) }}</td></tr>{% endif %}
+  <tr><td colspan="4" class="num"><b>TOTAL {{ inv.currency }}</b></td><td class="num"><b>{{ money(inv.total) }}</b></td></tr>
+</table>
+{% if inv.payment_terms %}<p>Terms: {{ inv.payment_terms }}</p>{% endif %}
+{{ parts.notes(inv) }}
+{{ parts.bank(inv, shows) }}
+{{ parts.second_page(inv, shows) }}
+</body></html>
