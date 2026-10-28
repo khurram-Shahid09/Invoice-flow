@@ -19,3 +19,4 @@ CELERY_TASK_ALWAYS_EAGER = True
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 LLM_PROVIDER = "fake"  # tests never call a real AI
 GEMINI_API_KEYS = []
+LLM_CACHE_DIR = ""

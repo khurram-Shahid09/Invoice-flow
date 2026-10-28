@@ -189,6 +189,9 @@ GEMINI_MODELS = [
     m.strip() for m in env.list("GEMINI_MODELS", default=["gemini-3.6-flash", "gemini-3.5-flash"])
 ]
 
+# Reuse AI answers for identical pages (demos, local dev). Empty: off.
+LLM_CACHE_DIR = env.str("LLM_CACHE_DIR", default="").strip()
+
 # --- Decisions (docs/07 section 7; per-org overrides in Organization.settings) ---
 STRAIGHT_THROUGH_LIMIT = 50000  # in the org's base currency
 

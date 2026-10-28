@@ -4,6 +4,7 @@ Gemini runs on free-tier keys: several keys and models are tried in order, and a
 that hits its quota is skipped for an hour, so a demo never waits on an exhausted key.
 """
 
+import hashlib
 import json
 import logging
 import time
@@ -41,10 +42,34 @@ class Result:
 def extract(images: list[bytes], text_pages: list[str], filename: str) -> Result:
     provider = settings.LLM_PROVIDER
     if provider == "gemini":
-        return _gemini(images, text_pages)
+        return _cached(images, lambda: _gemini(images, text_pages))
     if provider == "fake":
         return _fake(filename)
     raise ExtractionError(f"Unknown LLM_PROVIDER {provider!r}")
+
+
+def _cached(images: list[bytes], call) -> Result:
+    """With LLM_CACHE_DIR set (demos, local dev), the same pages never cost a request twice.
+    Results are keyed by the page images, the models and the prompt version."""
+    folder = settings.LLM_CACHE_DIR
+    if not folder:
+        return call()
+    digest = hashlib.sha256(
+        b"".join(images) + f"{settings.GEMINI_MODELS}|{PROMPT_VERSION}".encode()
+    ).hexdigest()
+    path = Path(folder) / f"{digest[:32]}.json"
+    if path.is_file():
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return Result(Extraction.model_validate(data["extraction"]), **data["result"])
+    result = call()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fields = ("provider", "model", "input_tokens", "output_tokens", "ms", "trusted", "meta")
+    payload = {
+        "extraction": result.extraction.model_dump(),
+        "result": {k: getattr(result, k) for k in fields},
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return result
 
 
 def _gemini(images: list[bytes], text_pages: list[str]) -> Result:

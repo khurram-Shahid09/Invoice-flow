@@ -98,3 +98,25 @@ def test_gemini_rotates_to_the_next_key_on_quota(monkeypatch, settings) -> None:
     providers._gemini([b"png"], ["text"])
     assert used[-1] == "key-two"  # the exhausted key is skipped for an hour
     providers._exhausted.clear()
+
+
+def test_identical_pages_reuse_the_cached_answer(settings, tmp_path, monkeypatch) -> None:
+    settings.LLM_CACHE_DIR = str(tmp_path)
+    calls = []
+    empty = {"value": None, "page": None, "quote": None}
+    data: dict[str, Any] = {
+        n: empty
+        for n in Extraction.model_fields
+        if n not in ("document_type", "lines", "notes_for_reviewer")
+    }
+    data.update(document_type="invoice", lines=[])
+
+    def fake_call():
+        calls.append(1)
+        return providers.Result(Extraction.model_validate(data), "gemini", "m", 10, 5)
+
+    first = providers._cached([b"page"], fake_call)
+    again = providers._cached([b"page"], fake_call)
+    assert len(calls) == 1 and again.model == first.model == "m" and again.input_tokens == 10
+    providers._cached([b"other page"], fake_call)
+    assert len(calls) == 2
